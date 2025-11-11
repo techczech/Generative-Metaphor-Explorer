@@ -185,3 +185,21 @@ export const SavedIcon: React.FC<{ className?: string }> = ({ className }) => (
         inventory
     </span>
 );
+
+export const GenerateIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <span className={`material-symbols-outlined ${className}`}>
+        tips_and_updates
+    </span>
+);
+
+export const QuestionMarkIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <span className={`material-symbols-outlined ${className}`}>
+        help
+    </span>
+);
+
+export const CloseIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <span className={`material-symbols-outlined ${className}`}>
+        close
+    </span>
+);

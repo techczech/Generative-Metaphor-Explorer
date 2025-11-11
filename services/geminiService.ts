@@ -339,3 +339,30 @@ export const generateOrEditImage = async (
 
     throw new Error("Image generation failed to return an image.");
 };
+
+export const generateMetaphors = async (topic: string): Promise<string[]> => {
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable is not set");
+    }
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+    const prompt = `You are an expert in creative thinking and conceptual metaphors. A user wants to understand the topic "${topic}" better.
+    Generate 5-7 distinct and insightful generative metaphors for this topic.
+    Each metaphor should be in the format "X is Y", where X is the topic or a variation of it.
+    Return your answer as a JSON array of strings. For example, if the topic is "learning", you might return: ["learning is a journey", "learning is building a house"].`;
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-pro',
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
+            },
+        },
+    });
+
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText) as string[];
+};

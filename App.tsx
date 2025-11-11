@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { MetaphorAnalysis, MappingSet, StoredMetaphorAnalysis, ExploredPerspective, Fact, Comparison, GeneratedDocument, GeneratedImage, Mapping, Domain } from './types';
 import * as geminiService from './services/geminiService';
 import MetaphorInput from './components/MetaphorInput';
+import MetaphorGenerator from './components/MetaphorGenerator';
 import DomainColumn from './components/DomainColumn';
 import MappingSelector from './components/MappingSelector';
 import ConsequenceExplorer from './components/ConsequenceExplorer';
@@ -11,7 +12,7 @@ import About from './components/About';
 import SavedAnalyses from './components/SavedAnalyses';
 import CustomPerspectiveEditor from './components/CustomPerspectiveEditor';
 import HowItWorks from './components/HowItWorks';
-import { BrainCircuitIcon, LoaderIcon, AlertTriangleIcon, BookIcon, InfoIcon, ExportIcon, ImportIcon, TerminalIcon, SavedIcon } from './components/Icons';
+import { BrainCircuitIcon, LoaderIcon, AlertTriangleIcon, BookIcon, InfoIcon, ExportIcon, ImportIcon, TerminalIcon, SavedIcon, WandSparklesIcon, GenerateIcon, QuestionMarkIcon, CloseIcon } from './components/Icons';
 import GeminiInfoLink from './components/GeminiInfoLink';
 
 const LOCAL_STORAGE_KEY = 'metaphorAnalyses';
@@ -26,6 +27,7 @@ const App: React.FC = () => {
   const [userNotes, setUserNotes] = useState<string>('');
 
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState<boolean>(false);
+  const [isLoadingMetaphors, setIsLoadingMetaphors] = useState<boolean>(false);
   const [isLoadingConsequences, setIsLoadingConsequences] = useState<boolean>(false);
   const [isLoadingComparison, setIsLoadingComparison] = useState<boolean>(false);
   const [isLoadingDocument, setIsLoadingDocument] = useState<boolean>(false);
@@ -34,10 +36,13 @@ const App: React.FC = () => {
   
   const [savedAnalyses, setSavedAnalyses] = useState<Record<string, StoredMetaphorAnalysis>>({});
   
+  const [inputMode, setInputMode] = useState<'analyze' | 'generate'>('analyze');
+  const [generatedMetaphors, setGeneratedMetaphors] = useState<string[]>([]);
   const [isCustomMode, setIsCustomMode] = useState<boolean>(false);
   const [isComparisonMode, setIsComparisonMode] = useState<boolean>(false);
   const [customPerspective, setCustomPerspective] = useState<MappingSet | null>(null);
   const [draggedItem, setDraggedItem] = useState<{ index: number; side: 'source' | 'target' } | null>(null);
+  const [showHowItWorks, setShowHowItWorks] = useState<boolean>(false);
   
   const factRefs = useRef(new Map<string, HTMLDivElement | null>());
   const visualizerContainerRef = useRef<HTMLDivElement>(null);
@@ -64,6 +69,7 @@ const App: React.FC = () => {
     setIsCustomMode(false);
     setIsComparisonMode(false);
     setCustomPerspective(null);
+    setGeneratedMetaphors([]);
     factRefs.current.clear();
     if (!keepMetaphor) {
         setMetaphor('');
@@ -73,11 +79,33 @@ const App: React.FC = () => {
   const handleStopGeneration = () => {
     cancellationRef.current = true;
     setIsLoadingAnalysis(false);
+    setIsLoadingMetaphors(false);
     setIsLoadingConsequences(false);
     setIsLoadingComparison(false);
     setIsLoadingDocument(false);
     setIsLoadingImage(false);
     setError(null);
+  };
+  
+  const handleGenerateMetaphors = async (topic: string) => {
+    cancellationRef.current = false;
+    setIsLoadingMetaphors(true);
+    setGeneratedMetaphors([]);
+    setError(null);
+    resetState();
+
+    try {
+        const result = await geminiService.generateMetaphors(topic);
+        if (cancellationRef.current) return;
+        setGeneratedMetaphors(result);
+    } catch (e) {
+        if (!cancellationRef.current) {
+            console.error(e);
+            setError('Failed to generate metaphors. The model might be unavailable. Please try again.');
+        }
+    } finally {
+        setIsLoadingMetaphors(false);
+    }
   };
 
   const handleAnalyzeMetaphor = useCallback(async (metaphorToAnalyze: string) => {
@@ -765,6 +793,7 @@ const App: React.FC = () => {
                 <button onClick={handleExport} title="Export All Analyses" className="p-2 rounded-full hover:bg-slate-200"><ExportIcon/></button>
                 <button onClick={() => importFileRef.current?.click()} title="Import Analyses" className="p-2 rounded-full hover:bg-slate-200"><ImportIcon/></button>
                 <input type="file" ref={importFileRef} onChange={handleImport} accept=".json" className="hidden" />
+                <button onClick={() => setShowHowItWorks(true)} title="How It Works" className="p-2 rounded-full hover:bg-slate-200"><QuestionMarkIcon/></button>
             </nav>
           </div>
         </div>
@@ -773,12 +802,57 @@ const App: React.FC = () => {
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
         {page === 'explorer' && (
           <>
-            <MetaphorInput onAnalyze={handleAnalyzeMetaphor} isLoading={isLoadingAnalysis} onStop={handleStopGeneration} />
+            <div className="w-full max-w-2xl mx-auto">
+                <div className="flex border-b border-slate-200 mb-4">
+                    <button 
+                        onClick={() => setInputMode('analyze')}
+                        className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors rounded-t-lg -mb-px
+                            ${inputMode === 'analyze' 
+                                ? 'border-b-2 border-blue-600 text-blue-600' 
+                                : 'text-slate-500 hover:text-slate-800 border-b-2 border-transparent'
+                            }`
+                        }
+                    >
+                        <WandSparklesIcon />
+                        <span>Analyze a Metaphor</span>
+                    </button>
+                    <button
+                        onClick={() => setInputMode('generate')}
+                        className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors rounded-t-lg -mb-px
+                            ${inputMode === 'generate' 
+                                ? 'border-b-2 border-green-600 text-green-600' 
+                                : 'text-slate-500 hover:text-slate-800 border-b-2 border-transparent'
+                            }`
+                        }
+                    >
+                        <GenerateIcon />
+                        <span>Generate Metaphors</span>
+                    </button>
+                </div>
+
+                {inputMode === 'analyze' && (
+                    <MetaphorInput 
+                        onAnalyze={handleAnalyzeMetaphor} 
+                        isLoading={isLoadingAnalysis} 
+                        onStop={handleStopGeneration} 
+                    />
+                )}
+                
+                {inputMode === 'generate' && (
+                    <MetaphorGenerator 
+                        onGenerate={handleGenerateMetaphors}
+                        isLoading={isLoadingMetaphors}
+                        generatedMetaphors={generatedMetaphors}
+                        onSelectMetaphor={handleAnalyzeMetaphor}
+                        isAnalysisLoading={isLoadingAnalysis}
+                    />
+                )}
+            </div>
             
-            {isLoadingAnalysis && (
+            {(isLoadingAnalysis || isLoadingMetaphors) && (
               <div className="text-center p-8">
                 <LoaderIcon className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
-                <p className="text-slate-600">Analyzing metaphor... this may take a moment.</p>
+                <p className="text-slate-600">{isLoadingAnalysis ? 'Analyzing metaphor...' : 'Generating metaphors...'} this may take a moment.</p>
               </div>
             )}
 
@@ -789,9 +863,9 @@ const App: React.FC = () => {
               </div>
             )}
             
-            {!isLoadingAnalysis && !analysis && (
+            {!isLoadingAnalysis && !isLoadingMetaphors && !analysis && (
               <>
-                {Object.keys(savedAnalyses).length > 0 && (
+                {Object.keys(savedAnalyses).length > 0 ? (
                   <SavedAnalyses 
                     analyses={Object.values(savedAnalyses)} 
                     onLoad={handleLoadAnalysis}
@@ -799,8 +873,12 @@ const App: React.FC = () => {
                     isLoading={isLoadingAnalysis}
                     limit={3}
                   />
+                ) : (
+                  <div className="text-center text-slate-500 mt-16">
+                     <p>No recent explorations. Analyze a metaphor or generate one to get started!</p>
+                     <button onClick={() => setShowHowItWorks(true)} className="mt-4 text-blue-600 hover:underline">How does this work?</button>
+                  </div>
                 )}
-                <HowItWorks />
               </>
             )}
 
@@ -913,6 +991,24 @@ const App: React.FC = () => {
         {page === 'principles' && <Principles />}
         {page === 'about' && <About />}
       </main>
+
+       {showHowItWorks && (
+        <div 
+            className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4"
+            onClick={() => setShowHowItWorks(false)}
+        >
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
+                <HowItWorks />
+                <button 
+                    onClick={() => setShowHowItWorks(false)}
+                    className="absolute top-2 right-2 p-2 text-slate-500 bg-white/50 rounded-full hover:bg-white hover:text-slate-800 transition-colors"
+                    aria-label="Close how it works"
+                >
+                    <CloseIcon />
+                </button>
+            </div>
+        </div>
+      )}
 
       <footer className="bg-slate-100 border-t border-slate-200 text-center py-6 text-sm text-slate-500">
         <p>This tool was conceived and developed with <GeminiInfoLink /> by Dominik Lukeš based on the <a href="https://metaphorhacker.net" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">MetaphorHacker</a> approach. This approach was inspired by the work of Donald Schön, George Lakoff, Mark Johnson, Gilles Fauconnier, Mark Turner, and others.</p>
