@@ -179,3 +179,9 @@ export const ImageIcon: React.FC<{ className?: string }> = ({ className }) => (
         image
     </span>
 );
+
+export const SavedIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <span className={`material-symbols-outlined ${className}`}>
+        inventory
+    </span>
+);

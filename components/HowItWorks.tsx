@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { SourceIcon, PerspectiveIcon, ConsequencesIcon, WandSparklesIcon } from './Icons';
+import GeminiInfoLink from './GeminiInfoLink';
 
 const HowItWorks: React.FC = () => {
     return (
@@ -11,7 +11,7 @@ const HowItWorks: React.FC = () => {
                     <div className="text-blue-500 text-3xl mt-1 flex-shrink-0 font-bold">1.</div>
                     <div>
                         <h3 className="font-bold text-lg">Deconstruction</h3>
-                        <p className="text-slate-600">Enter a metaphor (e.g., "AI is an intern"). The tool uses AI to identify the <strong>Source Domain</strong> (Intern) and <strong>Target Domain</strong> (AI) and lists key attributes for each.</p>
+                        <p className="text-slate-600">Enter a metaphor (e.g., "AI is an intern"). The tool uses <GeminiInfoLink /> to identify the <strong>Source Domain</strong> (Intern) and <strong>Target Domain</strong> (AI) and lists key attributes for each.</p>
                     </div>
                 </div>
                 <div className="flex items-start gap-4">
@@ -25,7 +25,7 @@ const HowItWorks: React.FC = () => {
                     <div className="text-green-500 text-3xl mt-1 flex-shrink-0 font-bold">2.</div>
                     <div>
                         <h3 className="font-bold text-lg">Perspective Generation</h3>
-                        <p className="text-slate-600">The AI generates several <strong>Perspectives</strong>, which are different ways of mapping attributes from the source to the target, highlighting various aspects of the metaphor.</p>
+                        <p className="text-slate-600"><GeminiInfoLink /> generates several <strong>Perspectives</strong>, which are different ways of mapping attributes from the source to the target, highlighting various aspects of the metaphor.</p>
                     </div>
                 </div>
                 <div className="flex items-start gap-4">

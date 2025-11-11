@@ -101,7 +101,7 @@ const AddFactControl: React.FC<{
             </div>
              <button onClick={handleGenerate} disabled={isGenerating} className="mt-2 w-full flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50">
                 {isGenerating ? <LoaderIcon className="animate-spin" /> : <WandSparklesIcon />}
-                <span>{isGenerating ? 'Generating...' : 'Generate More with AI'}</span>
+                <span>{isGenerating ? 'Generating...' : 'Generate with Gemini'}</span>
             </button>
         </div>
     )
