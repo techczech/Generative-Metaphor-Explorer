@@ -1,16 +1,16 @@
 import React from 'react';
-import { SourceIcon, PerspectiveIcon, ConsequencesIcon, WandSparklesIcon } from './Icons';
+import { AlertTriangleIcon } from './Icons';
 import GeminiInfoLink from './GeminiInfoLink';
 
 const HowItWorks: React.FC = () => {
     return (
-        <div className="max-w-4xl mx-auto my-8 p-6 md:p-8 bg-white rounded-xl shadow-md border border-slate-200 animate-fade-in text-slate-700">
+        <div className="max-w-4xl p-6 md:p-8 bg-white rounded-xl shadow-2xl border border-slate-200 text-slate-700">
             <h2 className="text-2xl font-bold text-slate-800 text-center mb-6">How Metaphornik Works</h2>
             <div className="grid md:grid-cols-2 gap-x-8 gap-y-6 text-left">
                 <div className="flex items-start gap-4">
                     <div className="text-blue-500 text-3xl mt-1 flex-shrink-0 font-bold">1.</div>
                     <div>
-                        <h3 className="font-bold text-lg">Deconstruction</h3>
+                        <h3 className="font-bold text-lg">Domain Mapping</h3>
                         <p className="text-slate-600">Enter a metaphor (e.g., "AI is an intern"). The tool uses <GeminiInfoLink /> to identify the <strong>Source Domain</strong> (Intern) and <strong>Target Domain</strong> (AI) and lists key attributes for each.</p>
                     </div>
                 </div>
@@ -34,6 +34,12 @@ const HowItWorks: React.FC = () => {
                         <h3 className="font-bold text-lg">Creative Extension</h3>
                         <p className="text-slate-600">Use the explored consequences as a creative brief to generate documents or images, turning abstract insights into concrete artifacts that embody the chosen perspective.</p>
                     </div>
+                </div>
+            </div>
+            <div className="mt-8 p-4 bg-slate-100 border border-slate-200 text-slate-600 rounded-lg flex items-start gap-3 text-sm">
+                <AlertTriangleIcon className="flex-shrink-0 mt-0.5 text-slate-500" />
+                <div>
+                    <strong>Warning!</strong> Not all suggestions by Gemini will reflect the whole range of possibilities. Do insert your own ideas and mappings and do not just rely on Gemini’s suggestions.
                 </div>
             </div>
         </div>
