@@ -1,0 +1,5 @@
+{
+  "name": "Metaphornik",
+  "description": "An application to explore new perspectives through generative metaphors. It identifies domains, generates facts, and visualizes mappings between them using the Gemini API, inspired by the work of Donald Schön, Lakoff & Johnson, and others.",
+  "requestFramePermissions": []
+}
