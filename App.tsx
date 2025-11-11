@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { MetaphorAnalysis, MappingSet, StoredMetaphorAnalysis, ExploredPerspective, Fact, Comparison, GeneratedDocument, GeneratedImage, Mapping, Domain } from './types';
 import * as geminiService from './services/geminiService';
@@ -13,12 +11,13 @@ import About from './components/About';
 import SavedAnalyses from './components/SavedAnalyses';
 import CustomPerspectiveEditor from './components/CustomPerspectiveEditor';
 import HowItWorks from './components/HowItWorks';
-import { BrainCircuitIcon, LoaderIcon, AlertTriangleIcon, BookIcon, InfoIcon, ExportIcon, ImportIcon, TerminalIcon } from './components/Icons';
+import { BrainCircuitIcon, LoaderIcon, AlertTriangleIcon, BookIcon, InfoIcon, ExportIcon, ImportIcon, TerminalIcon, SavedIcon } from './components/Icons';
+import GeminiInfoLink from './components/GeminiInfoLink';
 
 const LOCAL_STORAGE_KEY = 'metaphorAnalyses';
 
 const App: React.FC = () => {
-  const [page, setPage] = useState<'explorer' | 'principles' | 'about'>('explorer');
+  const [page, setPage] = useState<'explorer' | 'principles' | 'about' | 'saved'>('explorer');
   const [metaphor, setMetaphor] = useState<string>('');
   const [analysis, setAnalysis] = useState<MetaphorAnalysis | null>(null);
   const [selectedMappingIndices, setSelectedMappingIndices] = useState<number[]>([]);
@@ -661,6 +660,7 @@ const App: React.FC = () => {
         if (data.analysis.mappingSets.length > 0) {
             setSelectedMappingIndices([0]);
         }
+        setPage('explorer');
     }
   };
 
@@ -759,6 +759,7 @@ const App: React.FC = () => {
             </div>
             <nav className="flex items-center gap-2 sm:gap-4 text-sm font-semibold text-slate-600">
                 <button onClick={() => setPage('explorer')} className={`flex items-center gap-1 px-2 py-1 rounded ${page === 'explorer' ? 'text-blue-600 bg-blue-100' : 'hover:text-blue-600'}`}><TerminalIcon className="text-base"/><span>Explorer</span></button>
+                <button onClick={() => setPage('saved')} className={`flex items-center gap-1 px-2 py-1 rounded ${page === 'saved' ? 'text-blue-600 bg-blue-100' : 'hover:text-blue-600'}`}><SavedIcon className="text-base"/><span>Saved</span></button>
                 <button onClick={() => setPage('principles')} className={`flex items-center gap-1 px-2 py-1 rounded ${page === 'principles' ? 'text-blue-600 bg-blue-100' : 'hover:text-blue-600'}`}><BookIcon className="text-base"/><span>Principles</span></button>
                 <button onClick={() => setPage('about')} className={`flex items-center gap-1 px-2 py-1 rounded ${page === 'about' ? 'text-blue-600 bg-blue-100' : 'hover:text-blue-600'}`}><InfoIcon className="text-base"/><span>About</span></button>
                 <button onClick={handleExport} title="Export All Analyses" className="p-2 rounded-full hover:bg-slate-200"><ExportIcon/></button>
@@ -790,15 +791,16 @@ const App: React.FC = () => {
             
             {!isLoadingAnalysis && !analysis && (
               <>
-                <HowItWorks />
                 {Object.keys(savedAnalyses).length > 0 && (
                   <SavedAnalyses 
                     analyses={Object.values(savedAnalyses)} 
                     onLoad={handleLoadAnalysis}
                     onDelete={handleDeleteAnalysis}
                     isLoading={isLoadingAnalysis}
+                    limit={3}
                   />
                 )}
+                <HowItWorks />
               </>
             )}
 
@@ -898,13 +900,22 @@ const App: React.FC = () => {
             )}
           </>
         )}
-
+        
+        {page === 'saved' && (
+          <SavedAnalyses 
+            analyses={Object.values(savedAnalyses)} 
+            onLoad={handleLoadAnalysis}
+            onDelete={handleDeleteAnalysis}
+            isLoading={isLoadingAnalysis}
+            isPage={true}
+          />
+        )}
         {page === 'principles' && <Principles />}
         {page === 'about' && <About />}
       </main>
 
       <footer className="bg-slate-100 border-t border-slate-200 text-center py-6 text-sm text-slate-500">
-        <p>This tool was conceived and developed with Gemini by Dominik Lukeš based on the <a href="https://metaphorhacker.net" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">MetaphorHacker</a> approach. This approach was inspired by the work of Donald Schön, George Lakoff, Mark Johnson, Gilles Fauconnier, Mark Turner, and others.</p>
+        <p>This tool was conceived and developed with <GeminiInfoLink /> by Dominik Lukeš based on the <a href="https://metaphorhacker.net" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">MetaphorHacker</a> approach. This approach was inspired by the work of Donald Schön, George Lakoff, Mark Johnson, Gilles Fauconnier, Mark Turner, and others.</p>
       </footer>
     </div>
   );
