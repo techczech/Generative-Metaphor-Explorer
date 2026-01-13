@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { MetaphorAnalysis, MappingSet, StoredMetaphorAnalysis, ExploredPerspective, Fact, Comparison, GeneratedDocument, GeneratedImage, Mapping, Domain } from './types';
+import { MetaphorAnalysis, MappingSet, StoredMetaphorAnalysis, ExploredPerspective, Fact, Comparison, GeneratedDocument, GeneratedImage, Mapping, Domain, AlternativeFrame } from './types';
 import * as geminiService from './services/geminiService';
 import MetaphorInput from './components/MetaphorInput';
 import MetaphorGenerator from './components/MetaphorGenerator';
+import MetaphorIdentifier from './components/MetaphorIdentifier';
 import DomainColumn from './components/DomainColumn';
 import MappingSelector from './components/MappingSelector';
 import ConsequenceExplorer from './components/ConsequenceExplorer';
@@ -12,7 +13,7 @@ import About from './components/About';
 import SavedAnalyses from './components/SavedAnalyses';
 import CustomPerspectiveEditor from './components/CustomPerspectiveEditor';
 import HowItWorks from './components/HowItWorks';
-import { BrainCircuitIcon, LoaderIcon, AlertTriangleIcon, BookIcon, InfoIcon, ExportIcon, ImportIcon, TerminalIcon, SavedIcon, WandSparklesIcon, GenerateIcon, QuestionMarkIcon, CloseIcon } from './components/Icons';
+import { BrainCircuitIcon, LoaderIcon, AlertTriangleIcon, BookIcon, InfoIcon, ExportIcon, ImportIcon, TerminalIcon, SavedIcon, WandSparklesIcon, GenerateIcon, QuestionMarkIcon, CloseIcon, IdentifyIcon } from './components/Icons';
 import GeminiInfoLink from './components/GeminiInfoLink';
 
 const LOCAL_STORAGE_KEY = 'metaphorAnalyses';
@@ -28,6 +29,8 @@ const App: React.FC = () => {
 
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState<boolean>(false);
   const [isLoadingMetaphors, setIsLoadingMetaphors] = useState<boolean>(false);
+  const [isLoadingIdentifier, setIsLoadingIdentifier] = useState<boolean>(false);
+  const [isLoadingReframing, setIsLoadingReframing] = useState<boolean>(false);
   const [isLoadingConsequences, setIsLoadingConsequences] = useState<boolean>(false);
   const [isLoadingComparison, setIsLoadingComparison] = useState<boolean>(false);
   const [isLoadingDocument, setIsLoadingDocument] = useState<boolean>(false);
@@ -36,8 +39,12 @@ const App: React.FC = () => {
   
   const [savedAnalyses, setSavedAnalyses] = useState<Record<string, StoredMetaphorAnalysis>>({});
   
-  const [inputMode, setInputMode] = useState<'analyze' | 'generate'>('analyze');
+  const [inputMode, setInputMode] = useState<'analyze' | 'generate' | 'identify'>('analyze');
   const [generatedMetaphors, setGeneratedMetaphors] = useState<string[]>([]);
+  const [identifiedMetaphors, setIdentifiedMetaphors] = useState<{metaphor: string; explanation: string;}[]>([]);
+  const [alternativeFrames, setAlternativeFrames] = useState<AlternativeFrame[]>([]);
+  const [originalStatement, setOriginalStatement] = useState<string>('');
+  
   const [isCustomMode, setIsCustomMode] = useState<boolean>(false);
   const [isComparisonMode, setIsComparisonMode] = useState<boolean>(false);
   const [customPerspective, setCustomPerspective] = useState<MappingSet | null>(null);
@@ -70,6 +77,9 @@ const App: React.FC = () => {
     setIsComparisonMode(false);
     setCustomPerspective(null);
     setGeneratedMetaphors([]);
+    setIdentifiedMetaphors([]);
+    setAlternativeFrames([]);
+    setOriginalStatement('');
     factRefs.current.clear();
     if (!keepMetaphor) {
         setMetaphor('');
@@ -80,6 +90,8 @@ const App: React.FC = () => {
     cancellationRef.current = true;
     setIsLoadingAnalysis(false);
     setIsLoadingMetaphors(false);
+    setIsLoadingIdentifier(false);
+    setIsLoadingReframing(false);
     setIsLoadingConsequences(false);
     setIsLoadingComparison(false);
     setIsLoadingDocument(false);
@@ -146,6 +158,47 @@ const App: React.FC = () => {
       setIsLoadingAnalysis(false);
     }
   }, []);
+
+  const handleIdentifyMetaphors = async (statement: string) => {
+    cancellationRef.current = false;
+    setIsLoadingIdentifier(true);
+    setError(null);
+    resetState();
+    setOriginalStatement(statement);
+
+    try {
+        const result = await geminiService.identifyMetaphors(statement);
+        if (cancellationRef.current) return;
+        setIdentifiedMetaphors(result);
+    } catch (e) {
+        if (!cancellationRef.current) {
+            console.error(e);
+            setError('Failed to identify metaphors. The model might be unavailable. Please try again.');
+        }
+    } finally {
+        setIsLoadingIdentifier(false);
+    }
+  };
+
+  const handleReframeStatement = async () => {
+    if (!originalStatement || identifiedMetaphors.length === 0) return;
+    cancellationRef.current = false;
+    setIsLoadingReframing(true);
+    setError(null);
+
+    try {
+        const result = await geminiService.suggestAlternativeFrames(originalStatement, identifiedMetaphors);
+        if (cancellationRef.current) return;
+        setAlternativeFrames(result);
+    } catch (e) {
+        if (!cancellationRef.current) {
+            console.error(e);
+            setError('Failed to generate reframes. The model might be unavailable. Please try again.');
+        }
+    } finally {
+        setIsLoadingReframing(false);
+    }
+  };
   
   const handleSelectMapping = (index: number) => {
       setIsCustomMode(false);
@@ -828,6 +881,18 @@ const App: React.FC = () => {
                         <GenerateIcon />
                         <span>Generate Metaphors</span>
                     </button>
+                     <button
+                        onClick={() => setInputMode('identify')}
+                        className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors rounded-t-lg -mb-px
+                            ${inputMode === 'identify' 
+                                ? 'border-b-2 border-amber-600 text-amber-600' 
+                                : 'text-slate-500 hover:text-slate-800 border-b-2 border-transparent'
+                            }`
+                        }
+                    >
+                        <IdentifyIcon />
+                        <span>Identify Metaphors</span>
+                    </button>
                 </div>
 
                 {inputMode === 'analyze' && (
@@ -847,12 +912,28 @@ const App: React.FC = () => {
                         isAnalysisLoading={isLoadingAnalysis}
                     />
                 )}
+
+                {inputMode === 'identify' && (
+                    <MetaphorIdentifier
+                        onIdentify={handleIdentifyMetaphors}
+                        isLoading={isLoadingIdentifier}
+                        identifiedMetaphors={identifiedMetaphors}
+                        onSelectMetaphor={handleAnalyzeMetaphor}
+                        isAnalysisLoading={isLoadingAnalysis}
+                        onReframe={handleReframeStatement}
+                        isLoadingReframing={isLoadingReframing}
+                        alternativeFrames={alternativeFrames}
+                    />
+                )}
             </div>
             
-            {(isLoadingAnalysis || isLoadingMetaphors) && (
+            {(isLoadingAnalysis || isLoadingMetaphors || isLoadingIdentifier) && (
               <div className="text-center p-8">
                 <LoaderIcon className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
-                <p className="text-slate-600">{isLoadingAnalysis ? 'Analyzing metaphor...' : 'Generating metaphors...'} this may take a moment.</p>
+                <p className="text-slate-600">{
+                  isLoadingAnalysis ? 'Analyzing metaphor...' : 
+                  isLoadingMetaphors ? 'Generating metaphors...' :
+                  'Identifying metaphors...'} this may take a moment.</p>
               </div>
             )}
 
@@ -863,7 +944,7 @@ const App: React.FC = () => {
               </div>
             )}
             
-            {!isLoadingAnalysis && !isLoadingMetaphors && !analysis && (
+            {!isLoadingAnalysis && !isLoadingMetaphors && !isLoadingIdentifier && !analysis && (
               <>
                 {Object.keys(savedAnalyses).length > 0 ? (
                   <SavedAnalyses 

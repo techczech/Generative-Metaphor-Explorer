@@ -63,3 +63,8 @@ export interface StoredMetaphorAnalysis {
   comparisons?: Comparison[];
   timestamp: number;
 }
+
+export interface AlternativeFrame {
+  proposedMetaphor: string;
+  reasoning: string;
+}
