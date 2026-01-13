@@ -203,3 +203,15 @@ export const CloseIcon: React.FC<{ className?: string }> = ({ className }) => (
         close
     </span>
 );
+
+export const IdentifyIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <span className={`material-symbols-outlined ${className}`}>
+        saved_search
+    </span>
+);
+
+export const ReframeIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <span className={`material-symbols-outlined ${className}`}>
+        published_with_changes
+    </span>
+);

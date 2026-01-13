@@ -45,6 +45,9 @@ const About: React.FC = () => {
              <p>
               The core analysis is powered by <GeminiInfoLink />, which provides the semantic understanding required to construct metaphorical mappings. <strong>Warning!</strong> Not all suggestions by Gemini will reflect the whole range of possibilities. Do insert your own ideas and mappings and do not just rely on Gemini’s suggestions.
             </p>
+            <p>
+              The source code for this tool is open-source, licensed under the MIT License, and is available on <a href="https://github.com/techczech/Generative-Metaphor-Explorer" target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-600 hover:underline">GitHub</a>.
+            </p>
           </div>
         </section>
       </article>

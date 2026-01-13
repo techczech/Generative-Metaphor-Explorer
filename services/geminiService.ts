@@ -1,7 +1,7 @@
 
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import { MetaphorAnalysis, MappingSet, Domain, Mapping, Fact, GeneratedDocument, GeneratedImage } from '../types';
+import { MetaphorAnalysis, MappingSet, Domain, Mapping, Fact, GeneratedDocument, GeneratedImage, AlternativeFrame } from '../types';
 
 const analysisSchema = {
     type: Type.OBJECT,
@@ -365,4 +365,85 @@ export const generateMetaphors = async (topic: string): Promise<string[]> => {
 
     const jsonText = response.text.trim();
     return JSON.parse(jsonText) as string[];
+};
+
+const identifiedMetaphorSchema = {
+    type: Type.OBJECT,
+    properties: {
+        metaphor: { type: Type.STRING, description: "The conceptual metaphor in the format 'CONCEPT A IS CONCEPT B'." },
+        explanation: { type: Type.STRING, description: "A brief explanation of how the metaphor works in the context of the statement." }
+    },
+    required: ['metaphor', 'explanation']
+};
+
+export const identifyMetaphors = async (statement: string): Promise<{metaphor: string; explanation: string}[]> => {
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable is not set");
+    }
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+    const prompt = `You are an expert in conceptual metaphor analysis. A user has provided the statement: "${statement}".
+    Your task is to identify all potential conceptual metaphors present in this statement. For each metaphor you find, express it in the canonical 'A IS B' format and provide a brief explanation.
+    Return a JSON array of objects, where each object represents a metaphor and strictly follows the provided schema. If no metaphors are found, return an empty array.`;
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-pro',
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.ARRAY,
+                items: identifiedMetaphorSchema
+            },
+        },
+    });
+
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText) as {metaphor: string; explanation: string}[];
+};
+
+const alternativeFrameSchema = {
+    type: Type.OBJECT,
+    properties: {
+        proposedMetaphor: { type: Type.STRING, description: "The new conceptual metaphor, ideally in 'A is B' or 'A as B' format." },
+        reasoning: { type: Type.STRING, description: "A brief explanation of why this new frame is useful, what it highlights, and how it differs from the original." }
+    },
+    required: ['proposedMetaphor', 'reasoning']
+};
+
+export const suggestAlternativeFrames = async (statement: string, metaphors: {metaphor: string; explanation: string}[]): Promise<AlternativeFrame[]> => {
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable is not set");
+    }
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
+    const metaphorDetails = metaphors.map(m => `- "${m.metaphor}": ${m.explanation}`).join('\n');
+
+    const prompt = `You are an expert in communication and conceptual reframing. A user wants to explore alternative ways to understand a concept.
+
+    Original Statement/Concept: "${statement}"
+
+    This concept currently relies on the following conceptual metaphors:
+    ${metaphorDetails}
+
+    Your task is to propose 3-4 alternative conceptual metaphors that reframe the original concept in a different light. The goal is to find frames that might be more constructive, nuanced, or have fewer conceptual mismatches.
+
+    For each proposal, provide the new metaphor and a brief reasoning for its usefulness. Use the user's example of reframing "Surveillance Capitalism" as "Evidence-Based Capitalism" (drawing on "Evidence-Based Medicine") as a guide for the kind of creative, analytical reframing required.
+
+    Return a JSON array of objects, where each object strictly follows the provided schema.`;
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-pro',
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.ARRAY,
+                items: alternativeFrameSchema
+            },
+        },
+    });
+    
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText) as AlternativeFrame[];
 };
