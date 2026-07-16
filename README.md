@@ -1,3 +1,12 @@
+---
+name: "Generative Metaphor Explorer"
+description: "Makes conceptual metaphor an exploratory activity by generating alternative frames and perspectives."
+categories: [interactive-learning-objects, web-app, built-by-ai, powered-by-ai]
+updated: 2026-07-16
+deployments:
+  Appsite:
+    "Generative Metaphor Explorer": https://metaphornik.edutools.fyi/
+---
 # Metaphornik
 
 *Explore new perspectives through generative metaphors*
