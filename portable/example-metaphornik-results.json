@@ -1,0 +1,67 @@
+{
+  "format": "metaphornik-results",
+  "version": 1,
+  "analyses": {
+    "Learning is a journey": {
+      "metaphor": "Learning is a journey",
+      "analysis": {
+        "sourceDomain": {
+          "name": "Journey",
+          "facts": [
+            {
+              "id": "source-0",
+              "text": "Travellers choose routes."
+            },
+            {
+              "id": "source-1",
+              "text": "Journeys can include detours."
+            }
+          ]
+        },
+        "targetDomain": {
+          "name": "Learning",
+          "facts": [
+            {
+              "id": "target-0",
+              "text": "Learners choose strategies."
+            },
+            {
+              "id": "target-1",
+              "text": "Learners revise their understanding."
+            }
+          ]
+        },
+        "mappingSets": [
+          {
+            "name": "Choosing a route",
+            "description": "Connects route choice with learning strategies.",
+            "icon": "route",
+            "mappings": [
+              {
+                "sourceFactIndex": 0,
+                "targetFactIndex": 0
+              }
+            ]
+          }
+        ]
+      },
+      "exploredPerspectives": [
+        {
+          "mappingSetIndex": 0,
+          "consequences": [
+            "## Insights\nLearners can revise their route.\n\n## Limitations\nA journey can imply a fixed destination that learning may lack."
+          ],
+          "generatedDocuments": [
+            {
+              "type": "Learning invitation",
+              "content": "Choose a question to explore together.",
+              "timestamp": 1792695600000
+            }
+          ]
+        }
+      ],
+      "comparisons": [],
+      "timestamp": 1792695600000
+    }
+  }
+}

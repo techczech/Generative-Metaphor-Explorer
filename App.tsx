@@ -1,3 +1,10 @@
+import { getSettings } from './services/providerSettings';
+import ProviderSettings from './components/ProviderSettings';
+import { validateResults, resultEnvelope } from './portable/metaphornik-results.mjs';
+import { renderWithAssets } from './portable/metaphornik-render-core.mjs';
+import viewerMarkdown from './portable/copy-metaphornik-viewer.md?raw';
+import viewerCss from './portable/metaphornik-viewer.css?raw';
+import viewerScript from './portable/metaphornik-viewer.js?raw';
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { MetaphorAnalysis, MappingSet, StoredMetaphorAnalysis, ExploredPerspective, Fact, Comparison, GeneratedDocument, GeneratedImage, Mapping, Domain, AlternativeFrame } from './types';
 import * as geminiService from './services/geminiService';
@@ -56,14 +63,22 @@ const App: React.FC = () => {
   const importFileRef = useRef<HTMLInputElement>(null);
   const cancellationRef = useRef(false);
 
+  const storageBlocked = useRef(false);
+  const persistAnalyses = (value: Record<string, StoredMetaphorAnalysis>) => {
+    if (storageBlocked.current) { setError('Existing browser records could not be validated and have been preserved. Export your current work before reloading.'); return; }
+    try { localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(value)); }
+    catch { setError('Browser storage is full or unavailable. Your current work is in memory; export it before closing this page.'); }
+  };
+
   useEffect(() => {
     try {
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (saved) {
-            setSavedAnalyses(JSON.parse(saved));
+            setSavedAnalyses(validateResults(JSON.parse(saved)));
         }
     } catch (e) {
-        console.error("Failed to load saved analyses from localStorage", e);
+        storageBlocked.current = true;
+        setError('Existing browser records could not be loaded and have been preserved. Import a validated results file to view it.');
     }
   }, []);
   
@@ -112,8 +127,8 @@ const App: React.FC = () => {
         setGeneratedMetaphors(result);
     } catch (e) {
         if (!cancellationRef.current) {
-            console.error(e);
-            setError('Failed to generate metaphors. The model might be unavailable. Please try again.');
+
+            setError(e instanceof Error ? e.message : 'Failed to generate metaphors. The model might be unavailable. Please try again.');
         }
     } finally {
         setIsLoadingMetaphors(false);
@@ -142,7 +157,7 @@ const App: React.FC = () => {
 
       setSavedAnalyses(prev => {
         const updated = { ...prev, [metaphorToAnalyze]: newStoredAnalysis };
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+        persistAnalyses(updated);
         return updated;
       });
 
@@ -151,8 +166,8 @@ const App: React.FC = () => {
       }
     } catch (e) {
       if (!cancellationRef.current) {
-        console.error(e);
-        setError('Failed to analyze the metaphor. The model might be unavailable or the input is invalid. Please try again.');
+
+        setError(e instanceof Error ? e.message : 'Failed to analyze the metaphor. The model might be unavailable or the input is invalid. Please try again.');
       }
     } finally {
       setIsLoadingAnalysis(false);
@@ -172,8 +187,8 @@ const App: React.FC = () => {
         setIdentifiedMetaphors(result);
     } catch (e) {
         if (!cancellationRef.current) {
-            console.error(e);
-            setError('Failed to identify metaphors. The model might be unavailable. Please try again.');
+
+            setError(e instanceof Error ? e.message : 'Failed to identify metaphors. The model might be unavailable. Please try again.');
         }
     } finally {
         setIsLoadingIdentifier(false);
@@ -192,8 +207,8 @@ const App: React.FC = () => {
         setAlternativeFrames(result);
     } catch (e) {
         if (!cancellationRef.current) {
-            console.error(e);
-            setError('Failed to generate reframes. The model might be unavailable. Please try again.');
+
+            setError(e instanceof Error ? e.message : 'Failed to generate reframes. The model might be unavailable. Please try again.');
         }
     } finally {
         setIsLoadingReframing(false);
@@ -246,7 +261,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const explore = async () => {
-      if (isCustomMode || selectedMappingIndices.length === 0 || !analysis || !metaphor) {
+      if (!getSettings().apiKey || isCustomMode || selectedMappingIndices.length === 0 || !analysis || !metaphor) {
         return;
       }
       
@@ -289,14 +304,14 @@ const App: React.FC = () => {
   
             const updatedAnalysis: StoredMetaphorAnalysis = { ...currentAnalysis, exploredPerspectives: newExploredPerspectives, timestamp: Date.now() };
             const updatedAll = { ...prev, [metaphor]: updatedAnalysis };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedAll));
+            persistAnalyses(updatedAll);
             return updatedAll;
           });
   
         } catch (e) {
           if (!cancellationRef.current) {
-            console.error(e);
-            setError('Failed to explore consequences. Please try again.');
+
+            setError(e instanceof Error ? e.message : 'Failed to explore consequences. Please try again.');
           }
         }
       }
@@ -342,7 +357,7 @@ const App: React.FC = () => {
 
       setSavedAnalyses(prev => {
         const updatedAll = { ...prev, [metaphor]: updatedStoredAnalysis };
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedAll));
+        persistAnalyses(updatedAll);
         return updatedAll;
       });
 
@@ -355,8 +370,8 @@ const App: React.FC = () => {
 
     } catch (e) {
       if (!cancellationRef.current) {
-        console.error(e);
-        setError('Failed to explore or save the custom perspective.');
+
+        setError(e instanceof Error ? e.message : 'Failed to explore or save the custom perspective.');
       }
     } finally {
       setIsLoadingConsequences(false);
@@ -376,7 +391,7 @@ const App: React.FC = () => {
                 const result = await geminiService.exploreConsequences(metaphor, selectedSet, analysis.sourceDomain, analysis.targetDomain);
                 setConsequencesMap(prev => ({ ...prev, [index]: result }));
             } catch (e) {
-                setError(`Failed to load perspective "${analysis.mappingSets[index].name}" for comparison.`);
+                setError(e instanceof Error ? e.message : `Failed to load perspective "${analysis.mappingSets[index].name}" for comparison.`);
                 setIsLoadingConsequences(false);
                 return;
             }
@@ -416,7 +431,7 @@ const App: React.FC = () => {
             setComparisonResult(result);
             handleSaveComparison(result, '');
         } catch (e) {
-            if (!cancellationRef.current) setError("Failed to generate comparison.");
+            if (!cancellationRef.current) setError(e instanceof Error ? e.message : "Failed to generate comparison.");
         } finally {
             setIsLoadingComparison(false);
         }
@@ -450,7 +465,7 @@ const App: React.FC = () => {
 
         const updatedAnalysis: StoredMetaphorAnalysis = { ...currentAnalysis, comparisons: updatedComparisons };
         const updatedAll = { ...prev, [metaphor]: updatedAnalysis };
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedAll));
+        persistAnalyses(updatedAll);
         return updatedAll;
     });
   };
@@ -526,12 +541,12 @@ const App: React.FC = () => {
             
             const updatedAnalysis: StoredMetaphorAnalysis = { ...currentAnalysis, exploredPerspectives: updatedExploredPerspectives };
             const updatedAll = { ...prev, [metaphor]: updatedAnalysis };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedAll));
+            persistAnalyses(updatedAll);
             return updatedAll;
         });
 
     } catch (e) {
-        if (!cancellationRef.current) setError(`Failed to generate document of type: ${documentType}`);
+        if (!cancellationRef.current) setError(e instanceof Error ? e.message : `Failed to generate document of type: ${documentType}`);
     } finally {
         setIsLoadingDocument(false);
     }
@@ -585,12 +600,12 @@ const App: React.FC = () => {
             };
 
             const updatedAll = { ...prev, [metaphor]: updatedStoredAnalysis };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedAll));
+            persistAnalyses(updatedAll);
             return updatedAll;
         });
 
     } catch (e) {
-        if (!cancellationRef.current) setError(`Failed to generate image.`);
+        if (!cancellationRef.current) setError(e instanceof Error ? e.message : `Failed to generate image.`);
     } finally {
         setIsLoadingImage(false);
     }
@@ -607,7 +622,7 @@ const App: React.FC = () => {
             timestamp: Date.now(),
         };
         const updatedAll = { ...prev, [metaphor]: updatedAnalysis };
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedAll));
+        persistAnalyses(updatedAll);
         return updatedAll;
     });
   };
@@ -647,7 +662,7 @@ const App: React.FC = () => {
         const newAnalysis: MetaphorAnalysis = { ...analysis, [domainKey]: newDomain };
         updateAndSaveAnalysis(newAnalysis);
     } catch (e) {
-        setError("Failed to generate more facts from AI.");
+        setError(e instanceof Error ? e.message : "Failed to generate more facts from AI.");
     }
   };
 
@@ -738,6 +753,7 @@ const App: React.FC = () => {
         resetState(true);
         setMetaphor(data.metaphor);
         setAnalysis(data.analysis);
+        setConsequencesMap(Object.fromEntries(data.exploredPerspectives.map(p => [p.mappingSetIndex, p.consequences.at(-1) || ''])));
         if (data.analysis.mappingSets.length > 0) {
             setSelectedMappingIndices([0]);
         }
@@ -749,7 +765,7 @@ const App: React.FC = () => {
     setSavedAnalyses(prev => {
         const updated = { ...prev };
         delete updated[metaphorKey];
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+        persistAnalyses(updated);
         return updated;
     });
     if (metaphor === metaphorKey) {
@@ -758,7 +774,9 @@ const App: React.FC = () => {
   };
 
   const handleExport = () => {
-    const dataStr = JSON.stringify(savedAnalyses, null, 2);
+    let dataStr: string;
+    try { dataStr = JSON.stringify(resultEnvelope(savedAnalyses), null, 2); }
+    catch { setError("Could not export results. Check that all saved explorations are valid."); return; }
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
@@ -772,22 +790,20 @@ const App: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 50 * 1024 * 1024) { setError('This file is too large. The maximum import size is 50 MB.'); return; }
     const reader = new FileReader();
+    reader.onerror = () => setError('Could not read the selected file.');
     reader.onload = (e) => {
         try {
             const text = e.target?.result;
             if (typeof text === 'string') {
-                const importedData = JSON.parse(text);
-                // Basic validation
-                if (typeof importedData === 'object' && !Array.isArray(importedData)) {
-                    setSavedAnalyses(prev => {
-                        const merged = { ...prev, ...importedData };
-                        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
-                        return merged;
-                    });
-                } else {
-                    throw new Error("Invalid format");
-                }
+                const importedData = validateResults(JSON.parse(text));
+                setError(null);
+                setSavedAnalyses(prev => {
+                    const merged = { ...prev, ...importedData };
+                    persistAnalyses(merged);
+                    return merged;
+                });
             }
         } catch (err) {
             setError("Failed to import file. Please make sure it's a valid JSON export from this tool.");
@@ -853,6 +869,20 @@ const App: React.FC = () => {
       </header>
 
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
+        <ProviderSettings />
+            {error && (
+              <div className="my-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-center gap-3">
+                <AlertTriangleIcon />
+                <span>{error}</span>
+              </div>
+            )}
+        <button className="mb-4 px-4 py-2 bg-white border rounded-lg" onClick={() => {
+          try {
+            const html = renderWithAssets(savedAnalyses, {markdown:viewerMarkdown,css:viewerCss,script:viewerScript});
+            const url = URL.createObjectURL(new Blob([html],{type:'text/html'}));
+            const link = document.createElement('a'); link.href=url; link.download='metaphornik-results.html'; link.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+          } catch { setError('Could not export results. Check that all saved explorations are valid.'); }
+        }}>Save offline HTML viewer</button>
         {page === 'explorer' && (
           <>
             <div className="w-full max-w-2xl mx-auto">
@@ -937,12 +967,7 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {error && (
-              <div className="my-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-center gap-3">
-                <AlertTriangleIcon />
-                <span>{error}</span>
-              </div>
-            )}
+
             
             {!isLoadingAnalysis && !isLoadingMetaphors && !isLoadingIdentifier && !analysis && (
               <>

@@ -1,0 +1,594 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Metaphornik portable results version 1",
+  "description": "Runtime validator additionally checks record keys match metaphor, unique fact IDs and perspective indices, valid mapping references, image base64 length and forbidden prototype keys.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "format": {
+          "const": "metaphornik-results"
+        },
+        "version": {
+          "const": 1
+        },
+        "analyses": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "metaphor": {
+                "type": "string"
+              },
+              "analysis": {
+                "type": "object",
+                "properties": {
+                  "sourceDomain": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "facts": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "custom": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "text"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "maxItems": 10000
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "facts"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "targetDomain": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "facts": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "custom": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "text"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "maxItems": 10000
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "facts"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "mappingSets": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "icon": {
+                          "type": "string"
+                        },
+                        "mappings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "sourceFactIndex": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "targetFactIndex": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "sourceFactIndex",
+                              "targetFactIndex"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "maxItems": 10000
+                        },
+                        "custom": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "description",
+                        "mappings"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 10000,
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "sourceDomain",
+                  "targetDomain",
+                  "mappingSets"
+                ],
+                "additionalProperties": false
+              },
+              "exploredPerspectives": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "mappingSetIndex": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "consequences": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "maxItems": 10000
+                    },
+                    "generatedDocuments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "content": {
+                            "type": "string"
+                          },
+                          "timestamp": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "content",
+                          "timestamp"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "maxItems": 10000
+                    },
+                    "generatedImage": {
+                      "type": "object",
+                      "properties": {
+                        "base64Data": {
+                          "type": "string",
+                          "pattern": "^[A-Za-z0-9+/]+={0,2}$",
+                          "maxLength": 30000000
+                        },
+                        "mimeType": {
+                          "enum": [
+                            "image/png",
+                            "image/jpeg",
+                            "image/webp"
+                          ]
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "prompt": {
+                                "type": "string"
+                              },
+                              "timestamp": {
+                                "type": "number",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "prompt",
+                              "timestamp"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "maxItems": 10000,
+                          "minItems": 1
+                        }
+                      },
+                      "required": [
+                        "base64Data",
+                        "mimeType",
+                        "history"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "mappingSetIndex",
+                    "consequences"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 10000
+              },
+              "comparisons": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "perspectiveIndices": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "maxItems": 10000
+                    },
+                    "aiSummary": {
+                      "type": "string"
+                    },
+                    "userNotes": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "perspectiveIndices",
+                    "aiSummary",
+                    "userNotes",
+                    "timestamp"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 10000
+              },
+              "timestamp": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "metaphor",
+              "analysis",
+              "exploredPerspectives",
+              "timestamp"
+            ],
+            "additionalProperties": false
+          },
+          "maxProperties": 1000
+        }
+      },
+      "required": [
+        "format",
+        "version",
+        "analyses"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "metaphor": {
+            "type": "string"
+          },
+          "analysis": {
+            "type": "object",
+            "properties": {
+              "sourceDomain": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "facts": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string"
+                        },
+                        "custom": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "text"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 10000
+                  }
+                },
+                "required": [
+                  "name",
+                  "facts"
+                ],
+                "additionalProperties": false
+              },
+              "targetDomain": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "facts": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string"
+                        },
+                        "custom": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "text"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 10000
+                  }
+                },
+                "required": [
+                  "name",
+                  "facts"
+                ],
+                "additionalProperties": false
+              },
+              "mappingSets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "icon": {
+                      "type": "string"
+                    },
+                    "mappings": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "sourceFactIndex": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "targetFactIndex": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "sourceFactIndex",
+                          "targetFactIndex"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "maxItems": 10000
+                    },
+                    "custom": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "description",
+                    "mappings"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 10000,
+                "minItems": 1
+              }
+            },
+            "required": [
+              "sourceDomain",
+              "targetDomain",
+              "mappingSets"
+            ],
+            "additionalProperties": false
+          },
+          "exploredPerspectives": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "mappingSetIndex": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "consequences": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 10000
+                },
+                "generatedDocuments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      },
+                      "content": {
+                        "type": "string"
+                      },
+                      "timestamp": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "content",
+                      "timestamp"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "maxItems": 10000
+                },
+                "generatedImage": {
+                  "type": "object",
+                  "properties": {
+                    "base64Data": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9+/]+={0,2}$",
+                      "maxLength": 30000000
+                    },
+                    "mimeType": {
+                      "enum": [
+                        "image/png",
+                        "image/jpeg",
+                        "image/webp"
+                      ]
+                    },
+                    "history": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "prompt": {
+                            "type": "string"
+                          },
+                          "timestamp": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "prompt",
+                          "timestamp"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "maxItems": 10000,
+                      "minItems": 1
+                    }
+                  },
+                  "required": [
+                    "base64Data",
+                    "mimeType",
+                    "history"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "mappingSetIndex",
+                "consequences"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 10000
+          },
+          "comparisons": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "perspectiveIndices": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "maxItems": 10000
+                },
+                "aiSummary": {
+                  "type": "string"
+                },
+                "userNotes": {
+                  "type": "string"
+                },
+                "timestamp": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "perspectiveIndices",
+                "aiSummary",
+                "userNotes",
+                "timestamp"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 10000
+          },
+          "timestamp": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "metaphor",
+          "analysis",
+          "exploredPerspectives",
+          "timestamp"
+        ],
+        "additionalProperties": false
+      },
+      "maxProperties": 1000
+    }
+  ]
+}

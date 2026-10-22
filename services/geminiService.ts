@@ -1,6 +1,10 @@
+import { getProviderClient } from './providerClient';
+import { validateAnalysis, validateImage } from '../portable/metaphornik-results.mjs';
 
 
-import { GoogleGenAI, Type, Modality } from "@google/genai";
+// Native Gemini REST schema/modalities; no SDK or machine-auth fallback.
+const Type = { OBJECT: 'OBJECT', ARRAY: 'ARRAY', STRING: 'STRING', INTEGER: 'INTEGER' } as const;
+const Modality = { IMAGE: 'IMAGE' } as const;
 import { MetaphorAnalysis, MappingSet, Domain, Mapping, Fact, GeneratedDocument, GeneratedImage, AlternativeFrame } from '../types';
 
 const analysisSchema = {
@@ -51,10 +55,7 @@ const analysisSchema = {
 };
 
 export const analyzeMetaphor = async (metaphor: string): Promise<MetaphorAnalysis> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable is not set");
-    }
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getProviderClient();
 
     const prompt = `You are an expert in conceptual metaphor analysis. A user has provided the metaphor: "${metaphor}".
     Your task is to analyze this metaphor. Please return a JSON object that strictly follows the provided schema.
@@ -87,7 +88,7 @@ export const analyzeMetaphor = async (metaphor: string): Promise<MetaphorAnalysi
         text: factText as unknown as string,
     }));
 
-    return analysisResult;
+    return validateAnalysis(analysisResult);
 };
 
 
@@ -97,10 +98,7 @@ export const exploreConsequences = async (
     sourceDomain: Domain,
     targetDomain: Domain
 ): Promise<string> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable is not set");
-    }
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getProviderClient();
 
     const mappingDetails = selectedMappingSet.mappings.map(m => {
         const sourceFact = sourceDomain.facts[m.sourceFactIndex]?.text;
@@ -142,10 +140,7 @@ Example table format:
 };
 
 export const generateMoreFacts = async (domainName: string, existingFacts: string[]): Promise<string[]> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable is not set");
-    }
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getProviderClient();
 
     const prompt = `You are an expert in conceptual analysis. For the domain "${domainName}", you are given a list of existing attributes: ${JSON.stringify(existingFacts)}.
     Generate 3-4 new, distinct, and concise attributes or facts that are relevant to this domain but are not on the existing list.
@@ -172,10 +167,7 @@ export const summarizeCustomPerspective = async (
     targetDomain: Domain,
     mappings: Mapping[]
 ): Promise<{ name: string; description: string }> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable is not set");
-    }
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getProviderClient();
 
     const mappingDetails = mappings.map(m => {
         const sourceFact = sourceDomain.facts[m.sourceFactIndex]?.text;
@@ -221,10 +213,7 @@ export const comparePerspectives = async (
         image?: GeneratedImage;
     }[]
 ): Promise<string> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable is not set");
-    }
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getProviderClient();
 
     const perspectivesDetails = perspectives.map(p => {
         const documentsDetails = p.documents.length > 0
@@ -270,10 +259,7 @@ export const generateDocumentFromPerspective = async (
     perspective: { set: MappingSet, consequences: string },
     documentType: string
 ): Promise<string> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable is not set");
-    }
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getProviderClient();
 
     const prompt = `You are a creative expert tasked with generating a document.
 Your work must be entirely shaped by a specific metaphorical perspective.
@@ -303,10 +289,7 @@ export const generateOrEditImage = async (
     prompt: string,
     baseImage?: { base64Data: string; mimeType: string; }
 ): Promise<{ base64Data: string; mimeType: string }> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable is not set");
-    }
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getProviderClient();
 
     const parts = [];
     if (baseImage) {
@@ -328,8 +311,9 @@ export const generateOrEditImage = async (
     });
 
     // Extract the image data from the response
-    for (const part of response.candidates[0].content.parts) {
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
         if (part.inlineData) {
+            validateImage({base64Data:part.inlineData.data,mimeType:part.inlineData.mimeType,history:[{prompt,timestamp:Date.now()}]});
             return {
                 base64Data: part.inlineData.data,
                 mimeType: part.inlineData.mimeType,
@@ -341,10 +325,7 @@ export const generateOrEditImage = async (
 };
 
 export const generateMetaphors = async (topic: string): Promise<string[]> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable is not set");
-    }
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getProviderClient();
 
     const prompt = `You are an expert in creative thinking and conceptual metaphors. A user wants to understand the topic "${topic}" better.
     Generate 5-7 distinct and insightful generative metaphors for this topic.
@@ -377,10 +358,7 @@ const identifiedMetaphorSchema = {
 };
 
 export const identifyMetaphors = async (statement: string): Promise<{metaphor: string; explanation: string}[]> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable is not set");
-    }
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getProviderClient();
 
     const prompt = `You are an expert in conceptual metaphor analysis. A user has provided the statement: "${statement}".
     Your task is to identify all potential conceptual metaphors present in this statement. For each metaphor you find, express it in the canonical 'A IS B' format and provide a brief explanation.
@@ -412,10 +390,7 @@ const alternativeFrameSchema = {
 };
 
 export const suggestAlternativeFrames = async (statement: string, metaphors: {metaphor: string; explanation: string}[]): Promise<AlternativeFrame[]> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable is not set");
-    }
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getProviderClient();
     
     const metaphorDetails = metaphors.map(m => `- "${m.metaphor}": ${m.explanation}`).join('\n');
 

@@ -11,7 +11,7 @@ deployments:
 
 *Explore new perspectives through generative metaphors*
 
-Metaphornik is an interactive web application designed to help users understand and creatively explore conceptual metaphors. Powered by Google's Gemini 2.5 Pro, it serves as a tool for critical thinking, creativity, and deeper insight into complex topics by deconstructing and reconstructing metaphorical mappings.
+Metaphornik is an interactive web application designed to help users understand and creatively explore conceptual metaphors. Using your own Gemini or OpenAI API key, it serves as a tool for critical thinking, creativity, and deeper insight into complex topics by deconstructing and reconstructing metaphorical mappings.
 
 This tool is inspired by the work of cognitive linguists like George Lakoff and Mark Johnson, the concept of frame negotiation, and the [MetaphorHacker](https://metaphorhacker.net) approach developed by Dominik Lukeš.
 
@@ -51,8 +51,8 @@ Metaphornik is a client-side Single Page Application (SPA) designed for simplici
 
 ### Core Components
 -   **Frontend Framework**: React 19 (via `react-dom/client`) handling the UI component tree and state management.
--   **Styling**: Tailwind CSS is used for utility-first styling, loaded via CDN for immediate rendering without complex build steps in this prototype environment. Google Material Symbols provide the iconography.
--   **AI Integration**: The app uses the `@google/genai` SDK to communicate directly with the Gemini API. There is no intermediate backend server; all prompts are constructed and sent from the client browser.
+-   **Styling**: Tailwind CSS 3 is bundled locally for utility-first styling. Google Material Symbols provide the iconography.
+-   **AI Integration**: Browser-direct Gemini and OpenAI APIs support all text operations, image generation and image editing. Provider settings keep the visitor's key in memory by default, with explicit opt-in browser persistence and a clear/reset action. No hosting proxy or build-time API key is used.
 -   **Data Persistence**: The application relies on the browser's `localStorage` to persist user analyses, ensuring data remains available across page reloads without requiring a database.
 
 ### Key Directories
@@ -64,16 +64,31 @@ Metaphornik is a client-side Single Page Application (SPA) designed for simplici
 
 Since Metaphornik is a client-side application, it can be deployed to any static site hosting service (e.g., Vercel, Netlify, GitHub Pages, Firebase Hosting).
 
-### Requirements
--   **API Key**: The application requires a valid Google Gemini API Key.
--   **Environment Variables**: The code expects the API key to be available via `process.env.API_KEY`.
+### Local development and static hosting
 
-### Steps
-1.  **Build**: In a standard development environment, you would bundle the application using tools like Vite, Webpack, or Parcel.
-2.  **Environment Configuration**: Configure your build tool or hosting provider to inject the `API_KEY` environment variable during the build process or runtime configuration.
-3.  **Host**: Upload the resulting static files (HTML, JS, CSS) to your hosting provider.
+Use Node.js 22.18 or later (the test command uses native TypeScript support) and npm:
 
-**Note**: In the current provided prototype structure, the application expects to run in an environment that handles ES modules and `process.env` injection automatically (like Google AI Studio or specific web containers).
+```sh
+npm ci
+npm test
+npm run typecheck
+npm run build
+npm run dev
+```
+
+The production build needs no credentials. Upload `dist/` to a static host when deployment is authorised. For Cloudflare Pages, use `npm ci && npm run build`, with output directory `dist`; no Functions, Worker, GCP service or secret binding is required. No deployment or DNS change is part of this migration.
+
+Visitors open **Provider settings**, select OpenAI or Gemini, enter their API key, and apply settings. Both providers support text analysis, metaphor generation, identification, reframing, perspective comparison, creative documents, image generation and image editing. Defaults are `gpt-4.1-mini` / `gpt-image-1` for OpenAI and `gemini-2.5-pro` / `gemini-2.5-flash-image` for Gemini; model IDs are editable for account availability. API usage is charged by the chosen provider. ChatGPT subscription sign-in is a later local-app feature.
+
+Keys are not embedded in the build, URLs, results or exports. Browser persistence is optional and can be cleared. Only select “Remember” on a device you trust. Provider authentication, model-access, quota and network failures are reported without exposing raw API response bodies.
+
+### Saved results and offline viewing
+
+Existing browser records and legacy JSON exports remain supported. Import validates complete records and mapping references before merging. Viewing, importing and exporting saved results need no key. **Save offline HTML viewer** packages all saved results into a single local file. Existing records are preserved if browser storage is unavailable or validation fails; export in-memory work before closing in that situation.
+
+The dependency-free portable renderer, machine-readable schema, example results and exact command contract are documented in [portable/README.md](portable/README.md). The complete `portable/` folder can be copied into a skill distribution without installing or building this app. The HTML viewer uses self-contained styling inspired by the existing interface and preserves all result content. It shows generated Markdown as text; the full app retains editing and AI generation.
+
+The web interface bundles its Tailwind 3 styling locally and retains its existing Google icon font; the portable viewer has no external dependencies. The repository no longer requires AI Studio-injected globals or its runtime import map.
 
 ## License
 

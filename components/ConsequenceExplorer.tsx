@@ -134,7 +134,8 @@ const ConsequenceExplorer: React.FC<ConsequenceExplorerProps> = ({
             if (firstLine.startsWith('### ')) elements.push(<h4 key={`h4-${blockIndex}`} className="text-lg font-semibold mt-4 mb-2 text-slate-700">{parseInlineFormatting(firstLine.substring(4))}</h4>);
             else if (firstLine.startsWith('## ')) elements.push(<h3 key={`h3-${blockIndex}`} className="text-xl font-bold mt-4 mb-2 text-slate-800">{parseInlineFormatting(firstLine.substring(3))}</h3>);
             else if (firstLine.startsWith('# ')) elements.push(<h2 key={`h2-${blockIndex}`} className="text-2xl font-bold mt-6 mb-3 text-slate-900">{parseInlineFormatting(firstLine.substring(2))}</h2>);
-            else elements.push(<p key={`p-${blockIndex}`} className="my-4">{parseInlineFormatting(block.replace(/\n/g, ' '))}</p>); // Not a valid heading
+            else { elements.push(<p key={`p-${blockIndex}`} className="my-4">{parseInlineFormatting(block.replace(/\n/g, ' '))}</p>); return; }
+            if (lines.length > 1) elements.push(<React.Fragment key={`heading-body-${blockIndex}`}>{renderMarkdown(lines.slice(1).join('\n'))}</React.Fragment>);
             return;
         }
 
