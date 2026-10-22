@@ -54,3 +54,13 @@ The delayed-operation inspection confirmed that a previously created adapter cli
 Checks: `npm test` passes 20 tests, including stale-client rejection, request abortion/late-response rejection, and no notifications for unchanged credentials or persistence-only changes. `npm run typecheck` and `npm run build` pass without credentials. `tests/metaphornik-credential-retry-browser.mjs` passes with all external traffic denied except intercepted synthetic-key OpenAI responses: zero requests for explored saved content, actionable prompt for an unexplored perspective, exactly one automatic request after setup, no duplicate after identical settings or unrelated parent rerenders, preserved saved content after clearing, and no queued second-perspective request or stale saved result after clearing during a multi-perspective operation. No actual API calls. The full original browser smoke also passes.
 
 Only this app repository was changed. The parent owns the specification review record and subsequent standards review.
+
+## Standards review follow-up: optional fields (2026-10-22)
+
+Fixed the reproduced `comparisons: false` import crash. Optional `comparisons`, `generatedDocuments` and `generatedImage` fields now validate whenever present, rather than only when truthy. Present values of the wrong type are rejected before import merging, storage, JSON export or HTML rendering. Omitted fields and empty optional arrays remain valid; the documented JSON format and schema do not change.
+
+The new focused regression failed before the fix with `Missing expected exception: comparisons must reject false`, then passed after the three presence checks were corrected. `npm test` now passes 22 tests; `npm run typecheck`, `npm run build` and `git diff --check` pass.
+
+`tests/metaphornik-invalid-import-browser.mjs` passes in an isolated headless context with all provider traffic denied. It rejects 12 imports spanning `false`, `0`, empty string and `null` for each affected optional field; verifies browser storage remains byte-identical across reloads; and then opens both existing saved perspectives and their comparison, including the original user notes, without a crash, page error, key or provider request. The original browser smoke and credential-retry browser regression both pass after the fix, including image generation/editing and offline viewer checks using synthetic/intercepted responses.
+
+Only this app repository was changed. No paid API calls or deployment occurred. The parent owns refreshing the canonical skill's copied portable validator and closing the shared review record.

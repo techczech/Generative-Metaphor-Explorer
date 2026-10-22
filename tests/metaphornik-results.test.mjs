@@ -33,3 +33,20 @@ test('Markdown is canonical for generated viewer labels',()=>{
  const html=renderWithAssets(example,{markdown:read('copy-metaphornik-viewer.md').replace('Metaphornik\n# subtitle','Changed title\n# subtitle'),css:read('metaphornik-viewer.css'),script:read('metaphornik-viewer.js')});
  assert.ok(html.includes('<title>Changed title</title>'));assert.ok(html.includes('<h1>Changed title</h1>'));
 });
+test('present optional collections reject falsy and other wrong-type values',()=>{
+ for(const field of ['comparisons','generatedDocuments','generatedImage']) {
+  const invalid=field==='generatedImage' ? [false,true,0,'',null,[],undefined] : [false,true,0,'',null,{},undefined];
+  for(const value of invalid) {
+   const input=clone();const target=field==='comparisons'?record(input):record(input).exploredPerspectives[0];target[field]=value;
+   assert.throws(()=>validateResults(input),/Invalid Metaphornik results/,`${field} must reject ${String(value)}`);
+   assert.throws(()=>resultEnvelope(input),/Invalid Metaphornik results/);
+   assert.throws(()=>renderResults(input),/Invalid Metaphornik results/);
+  }
+ }
+});
+test('omitted optional collections and empty optional arrays remain valid',()=>{
+ const input=clone();delete record(input).comparisons;delete record(input).exploredPerspectives[0].generatedDocuments;
+ assert.doesNotThrow(()=>validateResults(input));
+ record(input).comparisons=[];record(input).exploredPerspectives[0].generatedDocuments=[];
+ assert.deepEqual(resultEnvelope(input),input);
+});

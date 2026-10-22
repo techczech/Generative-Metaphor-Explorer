@@ -42,10 +42,10 @@ export function validateResults(input) {
     list(value.exploredPerspectives,p => {
       obj(p,['mappingSetIndex','consequences'],['generatedDocuments','generatedImage']); index(p.mappingSetIndex,count); if (seen.has(p.mappingSetIndex)) fail(); seen.add(p.mappingSetIndex);
       list(p.consequences,string);
-      if (p.generatedDocuments) list(p.generatedDocuments,d => { obj(d,['type','content','timestamp']); string(d.type); string(d.content); number(d.timestamp); });
-      if (p.generatedImage) validateImage(p.generatedImage);
+      if (Object.hasOwn(p, 'generatedDocuments')) list(p.generatedDocuments,d => { obj(d,['type','content','timestamp']); string(d.type); string(d.content); number(d.timestamp); });
+      if (Object.hasOwn(p, 'generatedImage')) validateImage(p.generatedImage);
     });
-    if (value.comparisons) list(value.comparisons,c => {
+    if (Object.hasOwn(value, 'comparisons')) list(value.comparisons,c => {
       obj(c,['perspectiveIndices','aiSummary','userNotes','timestamp']); list(c.perspectiveIndices,i => index(i,count)); string(c.aiSummary); string(c.userNotes); number(c.timestamp);
     });
   }
