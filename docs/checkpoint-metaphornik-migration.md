@@ -44,4 +44,3 @@ No deployment, DNS change, GCP deletion, licence change, desktop packaging or Ch
 Start the app with `npm run dev`. Generate the example HTML after the latest build (Vite clears dist on build), then register it with ReportScout before opening it. Run `node tests/metaphornik-browser.mjs` with `METAPHORNIK_PLAYWRIGHT_MODULE` pointing to an installed Playwright `index.mjs` and `METAPHORNIK_HEADLESS_SHELL` pointing to a bundled headless-shell executable if Playwright's own revision is unavailable. Optional `METAPHORNIK_TEST_URL` changes the local app URL. These optional verification tools are not renderer dependencies.
 
 The checked run used Playwright from `/Users/dominiklukes/.npm/_npx/86170c4cd1c5da32/node_modules/playwright/index.mjs` and bundled headless shell `/Users/dominiklukes/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell`.
-
