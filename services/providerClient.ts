@@ -1,4 +1,4 @@
-import { requireSettings } from './providerSettings.ts';
+import { requireSettings, getProviderVersion, subscribeProviderSettings } from './providerSettings.ts';
 
 type Schema = { type: string; properties?: Record<string, Schema>; items?: Schema; required?: string[]; description?: string };
 function jsonSchema(schema: Schema): object {
@@ -15,21 +15,32 @@ function check(value: unknown, schema: Schema): void {
   } else if (type === 'integer' ? !Number.isInteger(value) : typeof value !== type) throw new Error('Invalid value');
 }
 async function request(url: string, init: RequestInit, provider: string) {
-  let response: Response;
-  try { response = await fetch(url, { ...init, signal: AbortSignal.timeout(180000), credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer' }); }
-  catch { throw new Error(`${provider}: could not reach the API, or the request timed out. Check your connection and browser access.`); }
-  if (!response.ok) {
-    const reason = response.status === 401 || response.status === 403 ? 'Key rejected or model access denied. Check your key, API permissions and model access.'
-      : response.status === 429 ? 'Rate limit or quota reached. Check API billing and try later.'
-      : response.status === 400 || response.status === 404 ? 'Request or model unavailable. Check the model IDs and image permissions in Provider settings.'
-      : 'Provider error. Try again later.';
-    throw new Error(`${provider} (${response.status}): ${reason}`);
-  }
-  try { return await response.json(); } catch { throw new Error(`${provider}: returned an unreadable response.`); }
+  const version = getProviderVersion();
+  const controller = new AbortController();
+  const unsubscribe = subscribeProviderSettings(() => controller.abort());
+  try {
+    let response: Response;
+    try { response = await fetch(url, { ...init, signal: AbortSignal.any([controller.signal, AbortSignal.timeout(180000)]), credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer' }); }
+    catch { if (controller.signal.aborted) throw new Error('Provider settings changed. Start this generation again.'); throw new Error(`${provider}: could not reach the API, or the request timed out. Check your connection and browser access.`); }
+    if (!response.ok) {
+      const reason = response.status === 401 || response.status === 403 ? 'Key rejected or model access denied. Check your key, API permissions and model access.'
+        : response.status === 429 ? 'Rate limit or quota reached. Check API billing and try later.'
+        : response.status === 400 || response.status === 404 ? 'Request or model unavailable. Check the model IDs and image permissions in Provider settings.'
+        : 'Provider error. Try again later.';
+      throw new Error(`${provider} (${response.status}): ${reason}`);
+    }
+    let data;
+    try { data = await response.json(); } catch { throw new Error(`${provider}: returned an unreadable response.`); }
+    if (version !== getProviderVersion()) throw new Error('Provider settings changed. Start this generation again.');
+    return data;
+  } finally { unsubscribe(); }
 }
 export function getProviderClient() {
-  const settings = requireSettings();
+  requireSettings();
+  const version = getProviderVersion();
   return { models: { generateContent: async (args: any): Promise<any> => {
+    if (version !== getProviderVersion()) throw new Error('Provider settings changed. Start this generation again.');
+    const settings = requireSettings();
     const image = !!args.config?.responseModalities;
     let text: string | undefined;
     let result: any;

@@ -1,11 +1,11 @@
-import { getSettings } from './services/providerSettings';
+import { getSettings, getProviderVersion, subscribeProviderSettings } from './services/providerSettings';
 import ProviderSettings from './components/ProviderSettings';
 import { validateResults, resultEnvelope } from './portable/metaphornik-results.mjs';
 import { renderWithAssets } from './portable/metaphornik-render-core.mjs';
 import viewerMarkdown from './portable/copy-metaphornik-viewer.md?raw';
 import viewerCss from './portable/metaphornik-viewer.css?raw';
 import viewerScript from './portable/metaphornik-viewer.js?raw';
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, useSyncExternalStore } from 'react';
 import { MetaphorAnalysis, MappingSet, StoredMetaphorAnalysis, ExploredPerspective, Fact, Comparison, GeneratedDocument, GeneratedImage, Mapping, Domain, AlternativeFrame } from './types';
 import * as geminiService from './services/geminiService';
 import MetaphorInput from './components/MetaphorInput';
@@ -26,6 +26,8 @@ import GeminiInfoLink from './components/GeminiInfoLink';
 const LOCAL_STORAGE_KEY = 'metaphorAnalyses';
 
 const App: React.FC = () => {
+  const providerVersion = useSyncExternalStore(subscribeProviderSettings, getProviderVersion);
+  const autoExplorationAttempts = useRef(new Set<string>());
   const [page, setPage] = useState<'explorer' | 'principles' | 'about' | 'saved'>('explorer');
   const [metaphor, setMetaphor] = useState<string>('');
   const [analysis, setAnalysis] = useState<MetaphorAnalysis | null>(null);
@@ -83,6 +85,7 @@ const App: React.FC = () => {
   }, []);
   
   const resetState = (keepMetaphor = false) => {
+    autoExplorationAttempts.current.clear();
     setAnalysis(null);
     setSelectedMappingIndices([]);
     setConsequencesMap({});
@@ -216,6 +219,7 @@ const App: React.FC = () => {
   };
   
   const handleSelectMapping = (index: number) => {
+      autoExplorationAttempts.current.clear();
       setIsCustomMode(false);
       setCustomPerspective(null);
       setComparisonResult(null);
@@ -261,31 +265,42 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const explore = async () => {
-      if (!getSettings().apiKey || isCustomMode || selectedMappingIndices.length === 0 || !analysis || !metaphor) {
+      if (isCustomMode || selectedMappingIndices.length === 0 || !analysis || !metaphor) {
         return;
       }
       
+      const cached: Record<number, string> = {};
+      for (const index of selectedMappingIndices) {
+        const history = savedAnalyses[metaphor]?.exploredPerspectives.find(p => p.mappingSetIndex === index)?.consequences;
+        if (!consequencesMap[index] && history?.length) cached[index] = history[history.length - 1];
+      }
+      if (Object.keys(cached).length) {
+        setConsequencesMap(previous => ({ ...previous, ...cached }));
+        return;
+      }
+      const missing = selectedMappingIndices.filter(index => !consequencesMap[index] && !savedAnalyses[metaphor]?.exploredPerspectives.some(p => p.mappingSetIndex === index && p.consequences.length));
+      if (!getSettings().apiKey) {
+        setIsLoadingConsequences(false);
+        if (missing.length) setError('Add your API key in Provider settings and apply settings to continue the selected perspective. Saved consequences remain available without a key.');
+        else setError(previous => previous?.startsWith('Add your API key in Provider settings') ? null : previous);
+        return;
+      }
+      const attemptKey = (index: number) => JSON.stringify([metaphor, index, providerVersion]);
+      const consequencesToFetch = missing.filter(index => !autoExplorationAttempts.current.has(attemptKey(index)));
+      if (!consequencesToFetch.length) return;
+      const operationVersion = providerVersion;
       cancellationRef.current = false;
       setIsLoadingConsequences(true);
       setError(null);
-
-      const consequencesToFetch = selectedMappingIndices.filter(index => !consequencesMap[index]);
       
       for (const index of consequencesToFetch) {
-        const saved = savedAnalyses[metaphor];
-        const existingPerspective = saved?.exploredPerspectives.find(p => p.mappingSetIndex === index);
-  
-        if (existingPerspective && existingPerspective.consequences.length > 0) {
-          setConsequencesMap(prev => ({...prev, [index]: existingPerspective.consequences[existingPerspective.consequences.length - 1]}));
-          continue;
-        }
-
-        if (cancellationRef.current) break;
+        if (cancellationRef.current || operationVersion !== getProviderVersion()) break;
+        autoExplorationAttempts.current.add(attemptKey(index));
 
         try {
           const selectedSet = analysis.mappingSets[index];
           const result = await geminiService.exploreConsequences(metaphor, selectedSet, analysis.sourceDomain, analysis.targetDomain);
-          if (cancellationRef.current) break;
+          if (cancellationRef.current || operationVersion !== getProviderVersion()) break;
           
           setConsequencesMap(prev => ({...prev, [index]: result}));
   
@@ -309,20 +324,21 @@ const App: React.FC = () => {
           });
   
         } catch (e) {
-          if (!cancellationRef.current) {
+          if (!cancellationRef.current && operationVersion === getProviderVersion()) {
 
             setError(e instanceof Error ? e.message : 'Failed to explore consequences. Please try again.');
           }
         }
       }
-      setIsLoadingConsequences(false);
+      if (operationVersion === getProviderVersion()) setIsLoadingConsequences(false);
     };
     explore();
-  }, [selectedMappingIndices, analysis, metaphor, savedAnalyses, isCustomMode, consequencesMap]);
+  }, [selectedMappingIndices, analysis, metaphor, savedAnalyses, isCustomMode, consequencesMap, providerVersion]);
 
   const handleExploreCustom = async () => {
     if (!analysis || !customPerspective || !metaphor) return;
     
+    const operationVersion = getProviderVersion();
     cancellationRef.current = false;
     setIsLoadingConsequences(true);
     setConsequencesMap({});
@@ -332,12 +348,12 @@ const App: React.FC = () => {
       let finalPerspective = { ...customPerspective };
       if (finalPerspective.name === "My Custom Perspective" && finalPerspective.mappings.length > 0) {
         const summary = await geminiService.summarizeCustomPerspective(analysis.sourceDomain, analysis.targetDomain, finalPerspective.mappings);
-        if (cancellationRef.current) return;
+        if (cancellationRef.current || operationVersion !== getProviderVersion()) return;
         finalPerspective = { ...finalPerspective, ...summary };
       }
 
       const result = await geminiService.exploreConsequences(metaphor, finalPerspective, analysis.sourceDomain, analysis.targetDomain);
-      if (cancellationRef.current) return;
+      if (cancellationRef.current || operationVersion !== getProviderVersion()) return;
       
       const currentStoredAnalysis = savedAnalyses[metaphor];
       if (!currentStoredAnalysis) throw new Error("Could not find analysis to save to.");
@@ -381,6 +397,10 @@ const App: React.FC = () => {
   const handleCompare = async () => {
     if (!analysis || !metaphor || selectedMappingIndices.length < 2) return;
 
+    const operationVersion = getProviderVersion();
+    cancellationRef.current = false;
+    const resolvedConsequences = { ...consequencesMap };
+
     // Load consequences for any missing perspectives before comparing
     const consequencesToFetch = selectedMappingIndices.filter(index => !consequencesMap[index]);
     if (consequencesToFetch.length > 0) {
@@ -389,6 +409,8 @@ const App: React.FC = () => {
             try {
                 const selectedSet = analysis.mappingSets[index];
                 const result = await geminiService.exploreConsequences(metaphor, selectedSet, analysis.sourceDomain, analysis.targetDomain);
+                if (cancellationRef.current || operationVersion !== getProviderVersion()) return;
+                resolvedConsequences[index] = result;
                 setConsequencesMap(prev => ({ ...prev, [index]: result }));
             } catch (e) {
                 setError(e instanceof Error ? e.message : `Failed to load perspective "${analysis.mappingSets[index].name}" for comparison.`);
@@ -399,43 +421,41 @@ const App: React.FC = () => {
         setIsLoadingConsequences(false);
     }
 
-    // This needs to be in a timeout to allow state to update from the fetch above.
-    setTimeout(async () => {
-        const perspectivesToCompare = selectedMappingIndices
-            .map(index => {
-                const currentSavedAnalysis = savedAnalyses[metaphor];
-                const exploredData = currentSavedAnalysis?.exploredPerspectives.find(p => p.mappingSetIndex === index);
-                return {
-                    set: analysis.mappingSets[index],
-                    consequences: consequencesMap[index], // Use the potentially just-fetched consequence
-                    documents: exploredData?.generatedDocuments || [],
-                    image: exploredData?.generatedImage
-                };
-            })
-            .filter(p => p.consequences) as { set: MappingSet; consequences: string; documents: GeneratedDocument[], image?: GeneratedImage }[];
+    if (cancellationRef.current || operationVersion !== getProviderVersion()) return;
+    const perspectivesToCompare = selectedMappingIndices
+        .map(index => {
+            const currentSavedAnalysis = savedAnalyses[metaphor];
+            const exploredData = currentSavedAnalysis?.exploredPerspectives.find(p => p.mappingSetIndex === index);
+            return {
+                set: analysis.mappingSets[index],
+                consequences: resolvedConsequences[index],
+                documents: exploredData?.generatedDocuments || [],
+                image: exploredData?.generatedImage
+            };
+        })
+        .filter(p => p.consequences) as { set: MappingSet; consequences: string; documents: GeneratedDocument[], image?: GeneratedImage }[];
 
-        if (perspectivesToCompare.length !== selectedMappingIndices.length) {
-            setError("Please ensure consequences are loaded for all selected perspectives before comparing.");
-            return;
-        }
+    if (perspectivesToCompare.length !== selectedMappingIndices.length) {
+        setError("Please ensure consequences are loaded for all selected perspectives before comparing.");
+        return;
+    }
 
-        cancellationRef.current = false;
-        setIsLoadingComparison(true);
-        setComparisonResult(null);
-        setUserNotes('');
-        setError(null);
+    cancellationRef.current = false;
+    setIsLoadingComparison(true);
+    setComparisonResult(null);
+    setUserNotes('');
+    setError(null);
 
-        try {
-            const result = await geminiService.comparePerspectives(metaphor, perspectivesToCompare);
-            if (cancellationRef.current) return;
-            setComparisonResult(result);
-            handleSaveComparison(result, '');
-        } catch (e) {
-            if (!cancellationRef.current) setError(e instanceof Error ? e.message : "Failed to generate comparison.");
-        } finally {
-            setIsLoadingComparison(false);
-        }
-    }, 100);
+    try {
+        const result = await geminiService.comparePerspectives(metaphor, perspectivesToCompare);
+        if (cancellationRef.current || operationVersion !== getProviderVersion()) return;
+        setComparisonResult(result);
+        handleSaveComparison(result, '');
+    } catch (e) {
+        if (!cancellationRef.current) setError(e instanceof Error ? e.message : "Failed to generate comparison.");
+    } finally {
+        setIsLoadingComparison(false);
+    }
   };
 
   const handleSaveComparison = (aiSummary: string, notes: string) => {

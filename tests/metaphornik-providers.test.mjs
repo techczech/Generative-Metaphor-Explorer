@@ -1,6 +1,6 @@
 import test, { afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { defaults,configureProvider,getSettings,restoreProvider,clearProvider } from '../services/providerSettings.ts';
+import { defaults,configureProvider,getSettings,restoreProvider,clearProvider,getProviderVersion,subscribeProviderSettings } from '../services/providerSettings.ts';
 import { getProviderClient } from '../services/providerClient.ts';
 const blockedFetch=async()=>{throw new Error('Real network disabled in provider tests');};
 globalThis.fetch=blockedFetch;
@@ -49,4 +49,20 @@ test('Gemini incomplete output and transport failures stay clear and redact raw 
  configureProvider({...defaults('gemini'),apiKey:'fake-key'});
  globalThis.fetch=async()=>json({candidates:[{finishReason:'MAX_TOKENS',content:{parts:[{text:'partial'}]}}]});await assert.rejects(call(),/blocked or incomplete/);
  globalThis.fetch=async()=>{throw new Error('raw error containing fake-key');};await assert.rejects(call(),e=>e.message.includes('could not reach')&&!e.message.includes('fake-key'));
+});
+test('a client created before clearing cannot send its captured key later',async()=>{
+ configureProvider({...defaults('openai'),apiKey:'fake-key'});const client=getProviderClient();let calls=0;globalThis.fetch=async()=>{calls++;return json({});};
+ clearProvider();await assert.rejects(client.models.generateContent({contents:'delayed'}),/settings changed/);assert.equal(calls,0);
+});
+test('clearing credentials aborts an in-flight request and rejects delayed results',async()=>{
+ configureProvider({...defaults('openai'),apiKey:'fake-key'});let signal;let release;
+ globalThis.fetch=async(url,init)=>{signal=init.signal;return await new Promise(resolve=>{release=resolve;});};
+ const pending=getProviderClient().models.generateContent({contents:'delayed'});clearProvider();assert.equal(signal.aborted,true);
+ release(json({choices:[{finish_reason:'stop',message:{content:'old-key result'}}]}));await assert.rejects(pending,/settings changed/);
+});
+
+test('identical credentials and persistence-only changes do not notify or retry generation',()=>{
+ const s=storage();configureProvider({...defaults('openai'),apiKey:'fake-key'},s);const version=getProviderVersion();let notifications=0;
+ const unsubscribe=subscribeProviderSettings(()=>notifications++);
+ try {configureProvider({...getSettings(),remember:true},s);configureProvider({...getSettings(),remember:false},s);assert.equal(getProviderVersion(),version);assert.equal(notifications,0);clearProvider(s);assert.equal(notifications,1);}finally{unsubscribe();}
 });
