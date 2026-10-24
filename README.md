@@ -88,7 +88,7 @@ Existing browser records and legacy JSON exports remain supported. Import valida
 
 The dependency-free portable renderer, machine-readable schema, example results and exact command contract are documented in [portable/README.md](portable/README.md). The complete `portable/` folder can be copied into a skill distribution without installing or building this app. The HTML viewer uses self-contained styling inspired by the existing interface and preserves all result content. It shows generated Markdown as text; the full app retains editing and AI generation.
 
-The web interface bundles its Tailwind 3 styling locally and retains its existing Google icon font; the portable viewer has no external dependencies. The repository no longer requires AI Studio-injected globals or its runtime import map.
+The web interface bundles its Tailwind 3 styling locally and bundles its Material Symbols icon font locally; the portable viewer has no external dependencies. The repository no longer requires AI Studio-injected globals or its runtime import map.
 
 ## License
 
@@ -101,3 +101,10 @@ The content, including the text on the "Principles" page, is licensed under a [C
 This tool was conceived and developed by **Dominik Lukeš** with the assistance of Gemini.
 
 The analytical approach is inspired by the work of Donald Schön, George Lakoff, Mark Johnson, Gilles Fauconnier, Mark Turner, and others.
+
+
+### Cloudflare release preparation
+
+The production build includes the readable landing page, canonical metadata, sitemap and robots file for `https://metaphornik.dominiklukes.net/`. Pages preview addresses receive a noindex response header through static `_headers` rules. All assets, including the icon font, are bundled. The direct visitor-key provider implementation remains; the older guide branch's owner-funded proxy is not included.
+
+Use `npm ci`, `npm test`, `npm run typecheck` and `npm run build`. The build verifies the canonical readable landing page, local resource references and deployment files. Wrangler configuration publishes only `dist`; no Functions, provider secrets or GCP backend are needed. A preview deployment is distinct from changing the public custom domain or retiring its existing services.

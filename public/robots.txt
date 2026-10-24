@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://metaphornik.dominiklukes.net/sitemap.xml

@@ -3,12 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Metaphornik</title>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-
+    <title>Metaphornik: explore new perspectives through generative metaphors</title>
+    <meta name="description" content="A tool for exploring conceptual metaphors. It splits a metaphor into source and target domains, generates alternative perspectives using your own API key, and lets you compare them." />
+    <link rel="canonical" href="https://metaphornik.dominiklukes.net/" />
+    <meta property="og:title" content="Metaphornik: explore new perspectives through generative metaphors" />
+    <meta property="og:description" content="A tool for exploring conceptual metaphors. It splits a metaphor into source and target domains, generates alternative perspectives using your own API key, and lets you compare them." />
+    <meta property="og:url" content="https://metaphornik.dominiklukes.net/" />
+    <meta property="og:type" content="website" />
 </head>
   <body class="bg-slate-50 text-slate-800">
-    <div id="root"></div>
+    <div id="root">
+      <main>
+        <h1>Metaphornik</h1>
+        <p>Explore new perspectives through generative metaphors.</p>
+        <p>Metaphornik helps you understand and explore conceptual metaphors. You give it a metaphor, or a topic to generate metaphors for, and it uses your selected OpenAI or Gemini model to take the metaphor apart and build alternative ways of seeing it. It is inspired by the work of cognitive linguists George Lakoff and Mark Johnson, by frame negotiation, and by the <a href="https://metaphorhacker.net">MetaphorHacker</a> approach developed by Dominik Luke&scaron;.</p>
+        <h2>How to use it</h2>
+        <ol>
+          <li><strong>Domain mapping.</strong> Enter a metaphor such as &ldquo;AI is an intern&rdquo;, or a topic such as &ldquo;banks&rdquo; to get a list of metaphors. The tool names the source domain (intern) and the target domain (AI) and lists the key attributes of each.</li>
+          <li><strong>Perspective generation.</strong> It then offers several perspectives: different ways of mapping attributes from the source to the target. You can drag facts between the domains to make your own, or add facts of your own.</li>
+          <li><strong>Consequence exploration.</strong> Select a perspective to see what it highlights, what it hides and what new insights it offers. Select up to three to compare them side by side.</li>
+          <li><strong>Creative extension.</strong> Use a perspective as a brief to generate a text such as a news story, a job advert or a slogan, or to create and edit an image.</li>
+        </ol>
+        <p>Your analyses are saved in your browser, and you can export them to a file and import them again. Use your own API key for new AI generations. Saved results and exported HTML work without a key. The tool needs JavaScript to run.</p>
+      </main>
+    </div>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

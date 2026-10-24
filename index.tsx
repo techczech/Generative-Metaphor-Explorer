@@ -1,3 +1,4 @@
+import '@fontsource-variable/material-symbols-outlined';
 import './styles/metaphornik.css';
 
 import React from 'react';

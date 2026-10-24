@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-10-24T01:50:15.923Z",
+  "base": "http://127.0.0.1:4411",
+  "checks": [
+    "JavaScript-off readable landing and own-key explanation",
+    "bundled icon font",
+    "desktop/mobile screenshots",
+    "zero external asset requests or page errors"
+  ],
+  "externalRequests": [],
+  "pageErrors": []
+}

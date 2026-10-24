@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {readFileSync,existsSync} from 'node:fs';
+const html=readFileSync('dist/index.html','utf8');
+assert.match(html,/<link\s+rel="canonical"\s+href="https:\/\/metaphornik\.dominiklukes\.net\/"/);
+assert.match(html,/<h1>Metaphornik<\/h1>/);
+assert.match(html,/source domain/);
+assert.match(html,/own API key/);
+assert.doesNotMatch(html,/cdn\.tailwindcss|fonts\.googleapis|aistudiocdn|type="importmap"/);
+for(const file of [...html.matchAll(/(?:src|href)="(\/assets\/[^"?#]+)"/g)].map(match=>'dist'+match[1]))assert.ok(existsSync(file),'missing bundled resource '+file);
+assert.match(readFileSync('dist/robots.txt','utf8'),/https:\/\/metaphornik\.dominiklukes\.net\/sitemap.xml/);
+assert.match(readFileSync('dist/sitemap.xml','utf8'),/<loc>https:\/\/metaphornik\.dominiklukes\.net\/<\/loc>/);
+const headers=readFileSync('dist/_headers','utf8');
+assert.match(headers,/https:\/\/:project\.pages\.dev\/\*[\s\S]*X-Robots-Tag: noindex/);
+assert.match(headers,/https:\/\/:version\.:project\.pages\.dev\/\*/);
+assert.ok(!existsSync('functions/api/gemini.ts'),'owner-funded proxy must not be reintroduced');
+console.log('PASS: readable canonical landing page, local entry/assets, sitemap and preview headers; no owner-funded proxy.');
