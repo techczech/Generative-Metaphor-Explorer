@@ -1,6 +1,6 @@
 {
-  "checkedAt": "2026-10-24T01:54:05.496Z",
-  "base": "http://127.0.0.1:4411",
+  "checkedAt": "2026-10-24T01:59:20.928Z",
+  "base": "https://8d940e2e.metaphornik.pages.dev",
   "checks": [
     "JavaScript-off readable landing and own-key explanation",
     "bundled icon font",

@@ -26,3 +26,8 @@ Existing three untracked sign-in research files are preserved. Current root feat
 - Cloudflare account authentication verified. Pages project metaphornik created for preview preparation; no custom domain changed and no deployment yet.
 
 - Screenshot inspection found the original mobile header extended to 751 pixels in a 390-pixel viewport. Header/navigation now wrap on narrow screens; the new browser assertion checks document width rather than merely taking a screenshot. No controls or provider behaviour changed.
+
+
+## Hosted preview checkpoint
+
+Checked source is pushed at7809141. Cloudflare preview deployed at https://8d940e2e.metaphornik.pages.dev, alias https://release-preview.metaphornik.pages.dev. Normal browser/UA checks return200 and X-Robots-Tag:noindex; intended canonical remains https://metaphornik.dominiklukes.net/. The actual hosted release-browser check passed readable JavaScript-off content, bundled font, desktop/mobile geometry and zero external asset requests/page errors. Its receipt now records the hosted URL. Partial independent Sol review found no new Metaphornik blocker before the user changed the review/build seats. Final cross-review remains pending under the new roles. No custom domain, redirect or GCP service was changed.
