@@ -24,3 +24,5 @@ Existing three untracked sign-in research files are preserved. Current root feat
 - The first full-browser attempt failed solely because its generated example fixture had been removed by Vite's clean build. The fixture was regenerated and the rerun passed. The build now generates that example automatically to make the documented checks reproducible from a fresh build.
 - Local icon font bundled. Production dependency audit: zero findings. No paid calls.
 - Cloudflare account authentication verified. Pages project metaphornik created for preview preparation; no custom domain changed and no deployment yet.
+
+- Screenshot inspection found the original mobile header extended to 751 pixels in a 390-pixel viewport. Header/navigation now wrap on narrow screens; the new browser assertion checks document width rather than merely taking a screenshot. No controls or provider behaviour changed.

@@ -866,7 +866,7 @@ const App: React.FC = () => {
     <div className="min-h-screen flex flex-col font-sans">
       <header className="bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-slate-200">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+          <div className="flex flex-col items-start gap-4 py-4 lg:flex-row lg:justify-between lg:items-center">
             <div className="flex items-center gap-3">
               <BrainCircuitIcon className="w-8 h-8 text-blue-600" />
               <div>
@@ -874,7 +874,7 @@ const App: React.FC = () => {
                 <p className="text-sm text-slate-600">Explore new perspectives through generative metaphors</p>
               </div>
             </div>
-            <nav className="flex items-center gap-2 sm:gap-4 text-sm font-semibold text-slate-600">
+            <nav className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm font-semibold text-slate-600">
                 <button onClick={() => setPage('explorer')} className={`flex items-center gap-1 px-2 py-1 rounded ${page === 'explorer' ? 'text-blue-600 bg-blue-100' : 'hover:text-blue-600'}`}><TerminalIcon className="text-base"/><span>Explorer</span></button>
                 <button onClick={() => setPage('saved')} className={`flex items-center gap-1 px-2 py-1 rounded ${page === 'saved' ? 'text-blue-600 bg-blue-100' : 'hover:text-blue-600'}`}><SavedIcon className="text-base"/><span>Saved</span></button>
                 <button onClick={() => setPage('principles')} className={`flex items-center gap-1 px-2 py-1 rounded ${page === 'principles' ? 'text-blue-600 bg-blue-100' : 'hover:text-blue-600'}`}><BookIcon className="text-base"/><span>Principles</span></button>
@@ -909,7 +909,7 @@ const App: React.FC = () => {
                 <div className="flex border-b border-slate-200 mb-4">
                     <button 
                         onClick={() => setInputMode('analyze')}
-                        className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors rounded-t-lg -mb-px
+                        className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-sm font-semibold transition-colors rounded-t-lg -mb-px
                             ${inputMode === 'analyze' 
                                 ? 'border-b-2 border-blue-600 text-blue-600' 
                                 : 'text-slate-500 hover:text-slate-800 border-b-2 border-transparent'
@@ -921,7 +921,7 @@ const App: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setInputMode('generate')}
-                        className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors rounded-t-lg -mb-px
+                        className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-sm font-semibold transition-colors rounded-t-lg -mb-px
                             ${inputMode === 'generate' 
                                 ? 'border-b-2 border-green-600 text-green-600' 
                                 : 'text-slate-500 hover:text-slate-800 border-b-2 border-transparent'
@@ -933,7 +933,7 @@ const App: React.FC = () => {
                     </button>
                      <button
                         onClick={() => setInputMode('identify')}
-                        className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors rounded-t-lg -mb-px
+                        className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-sm font-semibold transition-colors rounded-t-lg -mb-px
                             ${inputMode === 'identify' 
                                 ? 'border-b-2 border-amber-600 text-amber-600' 
                                 : 'text-slate-500 hover:text-slate-800 border-b-2 border-transparent'

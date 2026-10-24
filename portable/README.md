@@ -4,7 +4,7 @@ updated: 2026-10-22
 ---
 # Metaphornik portable renderer
 
-Copy this complete folder to distribute the renderer. It needs Node.js 18 or later and has no npm dependencies. Rendering and viewing require neither a key nor a network connection.
+Copy this complete folder to distribute the renderer. It needs Node.js 22.18 or later and has no npm dependencies. Rendering and viewing require neither a key nor a network connection.
 
 ```sh
 node render-metaphornik.mjs example-metaphornik-results.json metaphornik-results.html

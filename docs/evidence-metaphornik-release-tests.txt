@@ -1,0 +1,34 @@
+
+> metaphornik@0.0.0 test
+> node --test tests/*.test.mjs
+
+✔ memory-only default, explicit persistence, opt-out and clear (1.055625ms)
+✔ missing keys fail before fetch (0.466208ms)
+✔ OpenAI uses bearer header, wrapped structured outputs, and preserves prompt (19.112667ms)
+✔ Gemini direct request uses header key and native array schema (1.00275ms)
+✔ provider errors redact raw responses and identify key and quota failures (0.675458ms)
+✔ incomplete or malformed model output is rejected (0.598333ms)
+✔ OpenAI image generation and multipart edit preserve image content (1.1755ms)
+✔ Gemini image edits preserve inline input and modalities (0.376792ms)
+✔ blocked storage still permits in-memory configuration and memory reset (0.1485ms)
+✔ Gemini incomplete output and transport failures stay clear and redact raw errors (0.388167ms)
+✔ a client created before clearing cannot send its captured key later (0.124ms)
+✔ clearing credentials aborts an in-flight request and rejects delayed results (0.304291ms)
+✔ identical credentials and persistence-only changes do not notify or retry generation (0.093416ms)
+✔ legacy records and versioned exports preserve documents, consequences and mapping indices (3.157417ms)
+✔ malformed records, non-finite timestamps, unsupported versions and dangling mappings rejected (1.031167ms)
+✔ credentials and unknown properties cannot enter exported result fields (0.882292ms)
+✔ prototype pollution keys and active image MIME types are rejected (0.332875ms)
+✔ image payloads and prompt histories survive round trip (0.317958ms)
+✔ portable viewer is self-contained and escapes hostile result text (1.654125ms)
+✔ Markdown is canonical for generated viewer labels (2.552791ms)
+✔ present optional collections reject falsy and other wrong-type values (9.122667ms)
+✔ omitted optional collections and empty optional arrays remain valid (0.461792ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 195.206417
