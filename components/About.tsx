@@ -1,3 +1,5 @@
+import { citeText } from '../kit/citation';
+import { pageCitation } from '../citation';
 import React from 'react';
 import { BrainCircuitIcon, TerminalIcon } from './Icons';
 import GeminiInfoLink from './GeminiInfoLink';
@@ -49,6 +51,11 @@ const About: React.FC = () => {
               The source code for this tool is open-source, licensed under the MIT License, and is available on <a href="https://github.com/techczech/Generative-Metaphor-Explorer" target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-600 hover:underline">GitHub</a>.
             </p>
           </div>
+        </section>
+        <section className="mt-10" aria-labelledby="cite-heading">
+          <h2 id="cite-heading" className="text-2xl font-bold">Cite this page</h2>
+          <p>{citeText(pageCitation)}</p>
+          <button type="button" data-copy={citeText(pageCitation)} className="text-blue-600 underline">Copy citation</button>
         </section>
       </article>
     </div>

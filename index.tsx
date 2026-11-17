@@ -1,3 +1,5 @@
+import { initCopy } from './kit/copy';
+initCopy();
 import '@fontsource-variable/material-symbols-outlined';
 import './styles/metaphornik.css';
 

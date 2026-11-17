@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/check-metaphornik-release.mjs && node portable/render-metaphornik.mjs portable/example-metaphornik-results.json dist/metaphornik-example.html",
+    "build": "vite build && node scripts/check-metaphornik-release.mjs && node portable/render-metaphornik.mjs portable/example-metaphornik-results.json dist/metaphornik-example.html && node scripts/cite-public-example.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.mjs"
