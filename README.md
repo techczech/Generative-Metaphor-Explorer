@@ -105,7 +105,7 @@ The analytical approach is inspired by the work of Donald Schön, George Lakoff,
 
 ### Cloudflare release preparation
 
-The production build includes the readable landing page, canonical metadata, sitemap and robots file for `https://metaphornik.dominiklukes.net/`. Pages preview addresses receive a noindex response header through static `_headers` rules. All assets, including the icon font, are bundled. The direct visitor-key provider implementation remains; the older guide branch's owner-funded proxy is not included.
+The production build includes the readable landing page, canonical metadata, sitemap and robots file for `https://metaphornik.edutools.fyi/`. Pages preview addresses receive a noindex response header through static `_headers` rules. All assets, including the icon font, are bundled. The direct visitor-key provider implementation remains; the older guide branch's owner-funded proxy is not included.
 
 Use `npm ci`, `npm test`, `npm run typecheck` and `npm run build`. The build verifies the canonical readable landing page, local resource references and deployment files. Wrangler configuration publishes only `dist`; no Functions, provider secrets or GCP backend are needed. A preview deployment is distinct from changing the public custom domain or retiring its existing services.
 
